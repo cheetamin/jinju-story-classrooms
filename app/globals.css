@@ -46,3 +46,6 @@
 
 /* Keep the code entry and classroom picker usable on short screens. */
 .gallery-page.festival-fullscreen.locked-classroom .classroom-gate{max-height:calc(100dvh - 38px);overflow-y:auto}
+.classroom-gate>a.pixel-button{display:flex;align-items:center;justify-content:center;line-height:1.5;white-space:normal}
+.classroom-gate>small{display:block;margin-top:12px;line-height:1.7}
+.classroom-gate>hr{margin:20px 0;border:0;border-top:1px solid #d8c6d5}
