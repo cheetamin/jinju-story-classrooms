@@ -33,6 +33,6 @@ export function FestivalSound(){
   }
  }
  const label=state==='playing'?'소리 끄기':state==='muted'?'소리 다시 켜기':state==='unsupported'?'소리 지원 안 됨':'배경음 켜기';
- const button=<button type="button" data-festival-sound className="festival-sound pixel-button" onClick={()=>void toggle()} aria-pressed={state==='playing'} disabled={state==='unsupported'} title="잔잔한 시냇물과 밤축제 연주 · 발표할 때 잠시 꺼 두세요"><span aria-hidden="true">{state==='playing'?'🔊':'🔇'}</span> {label}</button>;
+ const button=<button type="button" data-festival-sound className="festival-sound pixel-button" onClick={()=>void toggle()} aria-pressed={state==='playing'} disabled={state==='unsupported'} title="밝고 경쾌한 유등축제 연주 · 발표할 때 잠시 꺼 두세요"><span aria-hidden="true">{state==='playing'?'🔊':'🔇'}</span> {label}</button>;
  return portal?createPortal(button,portal):button;
 }
