@@ -53,3 +53,7 @@
 .festival-sound{position:fixed;z-index:10001;left:100px;bottom:26px;font-size:15px;min-height:44px;max-width:calc(100% - 120px)}
 @media(max-width:700px){.festival-sound{left:14px;bottom:87px;font-size:13px;padding:8px 12px;max-width:180px}}
 @media(max-height:550px) and (orientation:landscape){.festival-sound{left:80px;bottom:12px;font-size:12px;padding:7px 10px}}
+
+.festival-sound-hint{position:fixed;z-index:10001;left:100px;bottom:85px;max-width:calc(100% - 120px);padding:6px 10px;border-radius:8px;background:#fff6df;color:#49325c;font-size:12px;pointer-events:none}
+@media(max-width:700px){.festival-sound-hint{left:14px;bottom:145px;max-width:230px;font-size:11px}}
+@media(max-height:550px) and (orientation:landscape){.festival-sound-hint{left:80px;bottom:65px}}
