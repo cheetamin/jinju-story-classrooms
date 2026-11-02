@@ -57,3 +57,43 @@
 .festival-sound-hint{position:fixed;z-index:10001;left:100px;bottom:85px;max-width:calc(100% - 120px);padding:6px 10px;border-radius:8px;background:#fff6df;color:#49325c;font-size:12px;pointer-events:none}
 @media(max-width:700px){.festival-sound-hint{left:14px;bottom:145px;max-width:230px;font-size:11px}}
 @media(max-height:550px) and (orientation:landscape){.festival-sound-hint{left:80px;bottom:65px}}
+
+/* Two companions share the same walk and arrival animation. */
+.festival-fullscreen .visitor.visitor-pair{display:flex;align-items:flex-end;width:300px;height:170px;pointer-events:none}
+.visitor.visitor-pair>img{flex:0 0 180px;width:180px;height:170px;object-fit:contain}
+.visitor.visitor-pair>img+img{margin-left:-60px}
+.modal:has(.jinju-map){width:1180px;max-height:92dvh;background:#fffcf1}
+.jinju-map{font-family:'Noto Sans KR',sans-serif;color:#40564b}
+.jinju-map-intro{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:20px}
+.map-eyebrow{font-size:11px;letter-spacing:2px;color:#9c7853;font-weight:700}
+.jinju-map-intro h3{font-family:'Jua',sans-serif;font-size:30px;font-weight:400;color:#3d6657;margin:7px 0}
+.jinju-map-intro p{margin:0;color:#65705d;font-size:12px}
+.jinju-map-tabs{display:flex;flex-shrink:0;gap:5px;background:#f0ecd9;border:1px solid #ded7bf;padding:5px;border-radius:13px}
+.jinju-map-tabs button{background:transparent;border:0;border-radius:9px;padding:10px 13px;color:#7c856e;font-size:12px;box-shadow:none}
+.jinju-map-tabs button[aria-pressed=true]{background:#557b65;color:#fff9df;box-shadow:0 2px 5px #324d4520}
+.jinju-map-layout{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:20px;align-items:stretch}
+.jinju-map-scroll{overflow:auto;border:1px solid #ddd8bd;border-radius:20px;background:#faf3df;scrollbar-color:#b2c1a0 #f2efda}
+.jinju-map-canvas{position:relative;min-width:650px;aspect-ratio:1000/620}
+.jinju-landscape{display:block;width:100%;height:100%}
+.map-district{font-family:'Jua',sans-serif;font-size:24px;fill:#a0b18b;letter-spacing:3px}
+.jinju-pin{position:absolute;translate:-50% -70%;display:flex;flex-direction:column;align-items:center;width:126px;padding:3px;border:0;background:transparent;box-shadow:none;color:#415d4e;transition:filter .15s}
+.jinju-pin:hover{background:transparent;transform:none;filter:brightness(1.04)}
+.jinju-pin>svg{width:105px;height:85px;overflow:visible;transition:translate .15s}
+.jinju-pin>span{font-family:'Jua',sans-serif;font-size:16px;font-weight:400;border:1px solid #bfc7a6;border-radius:20px;background:#fffdf0;padding:6px 11px;white-space:nowrap;box-shadow:0 3px 0 #526d4a16}
+.jinju-pin.is-selected>span{color:#fff9e4;background:#5c8169;border-color:#5c8169}
+.jinju-pin:hover>svg,.jinju-pin:focus-visible>svg{translate:0 -4px}
+.jinju-pin:focus-visible{outline:3px solid #bc8748;outline-offset:3px;border-radius:20px}
+.jinju-place-detail{background:#eef0de;border:1px solid #dce0c7;border-radius:20px;padding:23px 20px;display:flex;align-items:flex-start;flex-direction:column}
+.map-detail-tag{font-size:10px;letter-spacing:.6px;color:#59674e;border:1px solid #ccd4bc;background:#f8f8e9;border-radius:20px;padding:6px 9px}
+.jinju-place-detail>svg{width:120px;height:97px;align-self:center;margin:10px 0 0}
+.jinju-place-detail h3{font-family:'Jua',sans-serif;font-size:26px;font-weight:400;color:#41634f;margin:8px 0 10px}
+.jinju-place-detail>p{font-size:12px!important;line-height:1.9;margin:0;color:#64745e;word-break:keep-all}
+.map-think{background:#fff9e8;border-left:3px solid #cba96c;border-radius:0 10px 10px 0;padding:12px;margin:18px 0;color:#7d6b49}
+.map-think b{font-size:11px;color:#99784b}.map-think p{font-size:11px!important;line-height:1.8;margin:5px 0 0;word-break:keep-all}
+.map-detail-expand{border:1px solid #b7c7a5;background:#e3ead2;font-size:11px;color:#50714d;padding:9px 10px;line-height:1.6;width:100%;margin-bottom:15px;border-radius:8px}
+.jinju-place-detail>a{font-size:10px;color:#59775d;text-decoration:underline;text-underline-offset:4px;margin-top:auto;padding-top:12px}
+.jinju-map-note{color:#666a54;font-size:11px!important;line-height:1.8;margin:14px 0 7px}
+.jinju-map-credit{color:#6f705e;font-size:10px!important;margin:0}.jinju-map-credit a{text-decoration:underline;text-underline-offset:3px}
+@media(max-width:900px){.jinju-map-layout{grid-template-columns:minmax(0,1fr)}.jinju-place-detail{display:block;min-height:140px;padding:17px 20px}.jinju-place-detail>svg{float:right;width:90px;height:75px;margin:0 0 5px 12px}.jinju-place-detail h3{font-size:23px}.jinju-place-detail>p{max-width:620px}.map-think{margin:12px 0}.map-detail-expand{width:auto;margin:0 12px 0 0}.jinju-place-detail>a{display:inline-block;margin-top:7px}.jinju-map-intro h3{font-size:26px}}
+@media(max-width:700px){.festival-fullscreen .visitor.visitor-pair{width:250px;height:145px}.visitor.visitor-pair>img{flex-basis:155px;width:155px;height:145px}.jinju-map-intro{align-items:flex-start;flex-direction:column;gap:13px}.jinju-map-tabs{align-self:stretch}.jinju-map-tabs button{flex:1}.modal:has(.jinju-map){padding:17px}.jinju-map-intro h3{font-size:25px}.jinju-map-canvas{min-width:650px}.jinju-map-note{font-size:10px!important}}
+@media(max-height:550px) and (orientation:landscape){.festival-fullscreen .visitor.visitor-pair{width:200px;height:110px}.visitor.visitor-pair>img{flex-basis:120px;width:120px;height:110px}.visitor.visitor-pair>img+img{margin-left:-40px}}

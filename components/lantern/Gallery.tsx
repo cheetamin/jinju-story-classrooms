@@ -4,6 +4,7 @@ import {Animal,Visitor,colors,animals} from './Art';
 import {riverLanternLayout} from '../../lib/lantern/classrooms.mjs';
 import {LanternField} from './LanternField';
 import {normalizeClassCode} from '../../lib/lantern/class-code.mjs';
+import JinjuMap from './JinjuMap';
 import {FestivalSound} from './FestivalSound';
 import {FestivalBackdrop} from './FestivalBackdrop';
 import {api,Modal,Student,WorkView,ClassLink,classHref,fileUrl} from './shared';
@@ -48,6 +49,6 @@ export default function Gallery(){
  {panel==='entry'&&<Modal title="남강의 밤에 초대해요" onClose={()=>{setPanel('');setError('')}}><div className="login-art"><Animal n={1}/><Animal n={0}/><Animal n={2}/></div><p>{classroom.school} {classroom.label}<br/>선생님께 받은 학급 입장 코드를 입력해요.</p><form onSubmit={enter}><label>학급 입장 코드<input type="password" autoFocus value={code} onChange={e=>setCode(e.target.value)} required placeholder="입장 코드 입력" autoComplete="off"/></label>{error&&<p className="error" role="alert">{error}</p>}<button className="primary full" disabled={busy}>{busy?'문을 여는 중…':'전시관 입장하기 →'}</button></form></Modal>}
  {['class','works'].includes(panel)&&<Modal wide title={panel==='class'?classroom.label+' · 우리 반 유등':'친구들의 작품 모음'} onClose={()=>setPanel('')}><div className="student-grid">{rows.map(r=><button key={r.id} onClick={()=>{setSelected(r);setPanel('');setView(false)}}><Animal n={r.animal}/><b>{r.name}</b><small>{panel==='class'?animals[r.animal]+' 유등':r.published?.title||'아직 작품을 준비하고 있어요!'}</small><span className={'tag '+(r.published?'green':'')}>{r.published?'전시 중':'준비 중'}</span></button>)}</div></Modal>}
  {selected&&view&&selected.published&&<Modal wide title={selected.name+'의 지역 이야기'} onClose={()=>{setSelected(null);setView(false)}}><WorkView work={selected.published}/></Modal>}
-{panel==='map'&&<Modal wide title="남강을 따라 만나는 진주" onClose={()=>setPanel('')}><div className="map-art"><div className="map-river">남 강  ~ ~ ~</div><div className="map-place castle">⌂<b>진주성</b></div><div className="map-place pavilion">♜<b>촉석루</b></div><div className="map-place museum">▤<b>국립진주박물관</b></div><span className="map-tree t1">♧</span><span className="map-tree t2">♧</span><span className="map-tree t3">♧</span></div><p className="muted">장소의 관계를 쉽게 살펴보는 그림 지도예요. 실제 축척·위치와는 달라요.</p><div className="place-cards"><article><h3>진주성</h3><p>남강을 곁에 둔 성이에요. 성벽을 따라 걸으며 진주의 역사를 살펴볼 수 있어요.</p></article><article><h3>촉석루</h3><p>진주성 안에 있는 누각이에요. 높은 곳에서 남강의 풍경을 바라볼 수 있어요.</p></article><article><h3>남강과 유등</h3><p>진주를 흐르는 강이에요. 유등축제에는 강 위의 등불과 물에 비친 빛을 감상해요.</p></article></div></Modal>}
+{panel==='map'&&<Modal wide title="남강을 따라 만나는 진주" onClose={()=>setPanel('')}><JinjuMap/></Modal>}
  </div>;
 }
