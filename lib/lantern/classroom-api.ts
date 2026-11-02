@@ -32,10 +32,29 @@ async function createClassroom(req:Request,e:Store){
 
  return json({id,school:b.school.trim(),label:b.label.trim(),students:sorted.map((s,i)=>({id:String(s.number),name:s.name.trim(),password:initialPasswords[i]})),links:{gallery:'/gallery?class='+id,studio:'/studio?class='+id,teacher:'/teacher?class='+id}});
 }
-export async function handleClassroom(req:Request,e:Store){try{
+async function enterClassroomByCode(req:Request,e:Store):Promise<Response>{
+ await limit(e,req,'code-entry',150);
+ const b=await read(req);
+ if(typeof b.code!=='string'||b.code.length<6||b.code.length>64)fail('학급 입장 코드를 확인해 주세요.',401);
+ const rooms=await e.DB.prepare("SELECT c.id,c.school,c.label,c.class_code FROM classrooms c WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key='class_archived:'||c.id OR key='class_deleting:'||c.id) ORDER BY c.created LIMIT 101").all<{id:string;school:string;label:string;class_code:string}>();
+ const matches=[];
+ for(const room of rooms.results)if(await verifyPassword(b.code,room.class_code))matches.push(room);
+ if(!matches.length)fail('학급 입장 코드를 확인해 주세요.',401);
+ if(matches.length>1&&!b.classId)return json({choices:matches.map(({id,school,label})=>({id,school,label}))});
+ const room=b.classId?matches.find(room=>room.id===b.classId):matches[0];
+ if(!room)fail('학급 입장 코드를 확인해 주세요.',401);
+ const target=new URL(req.url);target.pathname='/api/auth/class';target.search='';target.searchParams.set('class',room.id);
+ const headers=new Headers(req.headers);headers.delete('content-length');headers.set('Content-Type','application/json');
+ const response=await handleClassroom(new Request(target,{method:'POST',headers,body:JSON.stringify({code:b.code})}),e);
+ const data=await response.json() as Record<string,unknown>;
+ const sessionCookie=response.headers.get('set-cookie');
+ return json(response.ok?{...data,href:'/gallery?class='+room.id}:data,response.status,sessionCookie?{'Set-Cookie':sessionCookie}:{});
+}
+export async function handleClassroom(req:Request,e:Store):Promise<Response>{try{
  const url=new URL(req.url),path=url.pathname.replace(/^\/api\//,''),method=req.method,roomId=url.searchParams.get('class')||'';
  if(method!=='GET'){if(req.headers.get('X-Lantern-Request')!=='1'||(req.headers.get('origin')&&req.headers.get('origin')!==url.origin))fail('허용되지 않은 요청이에요.',403);}
  if(path==='classrooms/create'&&method==='POST')return await createClassroom(req,e);
+ if(path==='classrooms/enter'&&method==='POST')return await enterClassroomByCode(req,e);
  if(!/^[a-f0-9-]{36}$/.test(roomId))fail('학급 주소를 확인해 주세요.',404);
  const d=e.DB;const room=await d.prepare('SELECT * FROM classrooms WHERE id=?').bind(roomId).first<any>();if(!room)fail('학급 전시관을 찾을 수 없어요.',404);if(await d.prepare('SELECT value FROM settings WHERE key=?').bind('class_deleting:'+roomId).first())fail('전체 관리자가 이 학급의 자료를 정리하고 있어요.',410);
  const cookieName='lantern_room_'+roomId.replaceAll('-','');const token=req.headers.get('cookie')?.split(';').map(s=>s.trim()).find(s=>s.startsWith(cookieName+'='))?.slice(cookieName.length+1);
