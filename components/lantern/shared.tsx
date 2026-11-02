@@ -1,0 +1,21 @@
+'use client';
+import {optimizeUpload} from '../../lib/lantern/image-upload';
+import {useEffect,useRef} from 'react';
+export type ChapterPage={heading:string;text:string;imageId:string;caption:string;source:string};
+export type Chapter={pages:ChapterPage[]};
+export type Work={title:string;body:string;files:string[];chapters?:Chapter[]};
+export type Student={isExample?:boolean;id:string;name:string;animal:number;published:Work|null;draft?:Work;submitted?:Work;status?:string;feedback?:string;revision?:number};
+export function classHref(path:string){if(typeof window==='undefined')return path;const id=new URLSearchParams(window.location.search).get('class');return id?path+(path.includes('?')?'&':'?')+'class='+encodeURIComponent(id):path;}
+export const fileUrl=(id:string)=>classHref('/api/files/'+encodeURIComponent(id));
+export async function api(path:string,data?:unknown){if(path==='upload'&&data instanceof FormData){const f=data.get('file');if(f instanceof File)data.set('file',await optimizeUpload(f));}const res=await fetch(classHref('/api/'+path),{method:data===undefined?'GET':'POST',credentials:'same-origin',headers:data instanceof FormData?{'X-Lantern-Request':'1'}:{'Content-Type':'application/json','X-Lantern-Request':'1'},body:data===undefined?undefined:data instanceof FormData?data:JSON.stringify(data)});const out:any=await res.json();if(!res.ok)throw Object.assign(Error(out.error||'다시 시도해 주세요.'),{status:res.status});return out;}
+export function Modal({title,children,onClose,wide=false}:{title:string;children:React.ReactNode;onClose:()=>void;wide?:boolean}){const ref=useRef<HTMLDialogElement>(null);useEffect(()=>{ref.current?.showModal()},[]);return <dialog ref={ref} className={wide?'modal wide':'modal'} onCancel={onClose}><header><h2>{title}</h2><button className="icon-btn" onClick={onClose} aria-label="닫기">×</button></header>{children}</dialog>}
+export function WorkView({work}:{work:Work}){if(work.chapters)return <ChapterBook work={work}/>;return <div className="work-view"><h2>{work.title}</h2><p className="body-copy">{work.body}</p>{work.files.map((id,i)=><Attachment key={id} id={id} index={i}/>)}</div>}
+export function Attachment({id,index}:{id:string;index:number}){const [type,setType]=requireReactState('');useEffect(()=>{let active=true;fetch(fileUrl(id)).then(r=>{if(active)setType(r.ok?r.headers.get('Content-Type')||'':'error');r.body?.cancel()}).catch(()=>setType('error'));return()=>{active=false}},[id]);const url=fileUrl(id);return <section className="attachment"><div className="attachment-title">첨부 자료 {index+1}<a href={url} target="_blank" rel="noreferrer">새 창에서 보기 / 원본 받기 ↗</a></div>{type.startsWith('image/')?<img src={url} alt={'작품 그림 '+(index+1)}/>:type==='application/pdf'?<><iframe src={url} title={'PDF 자료 '+(index+1)}/><small>미리보기가 보이지 않으면 위의 새 창에서 보기 버튼을 눌러 주세요.</small></>:<p>{type==='error'?'자료를 불러오지 못했어요. 다시 입장해 주세요.':type?'발표 파일은 원본을 내려받아 감상해요.':'자료를 불러오고 있어요…'}</p>}</section>}
+import {useState as requireReactState} from 'react';
+export const statusLabel:Record<string,string>={empty:'준비 중',pending:'승인 기다리는 중',approved:'전시 중',revision:'수정 요청',hidden:'비공개'};
+export function ClassLink({href,children,...rest}:{href:string;children:React.ReactNode;[key:string]:any}){const [target,setTarget]=requireReactState(href);useEffect(()=>setTarget(classHref(href)),[href]);return <a href={target} {...rest}>{children}</a>}
+export function PageHeader({active}:{active:string}){const [label,setLabel]=requireReactState('진주 · 4학년 4반');useEffect(()=>{api('status').then(r=>{if(r.classroom)setLabel(r.classroom.school+' · '+r.classroom.label)}).catch(()=>{})},[]);return <header className="site-header"><ClassLink className="brand" href="/gallery"><span className="brand-symbol">✦</span><span>남강 동물 유등 전시관<small>{label}</small></span></ClassLink><nav><ClassLink className={active==='gallery'?'active':''} href="/gallery">전시관</ClassLink><ClassLink className={active==='studio'?'active':''} href="/studio">작품 제작실</ClassLink><ClassLink className={active==='teacher'?'active':''} href="/teacher">교사 관리실</ClassLink></nav></header>}
+
+import {ChapterBook} from './ChapterBook';
+
+export function csvCell(value:unknown){let s=String(value??'');if(/^[=+@\-\t\r]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"'}

@@ -1,0 +1,7 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {canReadFile,validateWork,checkFile,hashPassword,verifyPassword} from '../lib/lantern/domain.mjs';
+test('viewer can only read attachments of approved snapshot',()=>{assert.equal(canReadFile({role:'viewer'},'1','f', {files:['f']}),true);assert.equal(canReadFile({role:'viewer'},'1','draft', {files:['f']}),false);assert.equal(canReadFile({role:'student',studentId:'2'},'1','draft',null),false);assert.equal(canReadFile({role:'student',studentId:'1'},'1','draft',null),true);});
+test('work rejects empty submissions and excessive content',()=>{assert.throws(()=>validateWork({title:'',body:'',files:[]},true));assert.throws(()=>validateWork({title:'x'.repeat(101),body:'',files:[]},false));assert.deepEqual(validateWork({title:'진주성',body:'소개',files:['a']},true),{title:'진주성',body:'소개',files:['a']});});
+test('file signatures reject disguised HTML and macro formats',()=>{assert.throws(()=>checkFile('x.png',new TextEncoder().encode('<html>')));assert.throws(()=>checkFile('x.pptm',new Uint8Array([80,75,3,4])));assert.equal(checkFile('x.pdf',new TextEncoder().encode('%PDF-1.7\n')),'application/pdf');});
+test('passwords salted, validated and never plaintext',async()=>{const a=await hashPassword('test-pass-123');const b=await hashPassword('test-pass-123');assert.notEqual(a,b);assert.equal(await verifyPassword('test-pass-123',a),true);assert.equal(await verifyPassword('wrong',a),false);});

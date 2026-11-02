@@ -1,0 +1,3 @@
+import {spawnSync} from 'node:child_process';import fs from 'node:fs';import path from 'node:path';
+const r=spawnSync(process.execPath,['node_modules/vite/bin/vite.js','build','--config','vite.external.config.ts'],{stdio:'inherit'});if(r.status!==0)process.exit(r.status??1);
+function clean(root){if(!fs.existsSync(root))return;for(const entry of fs.readdirSync(root,{withFileTypes:true})){const file=path.join(root,entry.name);if(entry.isDirectory())clean(file);else if(entry.name.startsWith('.dev.vars')||entry.name.startsWith('.env'))fs.rmSync(file)}}clean('dist');console.log('Independent build complete; local secret files removed from output.');

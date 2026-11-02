@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {riverLanternLayout} from '../lib/lantern/classrooms.mjs';
+test('rafts and reflected light remain above the near shore on phones and tablets',()=>{for(const height of [320,390,600,768,844,925,1080,1200])for(const count of [1,3,22,30,35,40,60,61]){const layout=riverLanternLayout(count,height);assert.ok(layout.reflectionEnd<=height*.75,`${count} lanterns at height ${height}`);assert.equal(layout.columns,Math.ceil(count/3));assert.equal(layout.anchors.length,3)}});

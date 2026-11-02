@@ -1,0 +1,3 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {firstAvailableStudent,lanternPhase,LANTERN_FLOW_SECONDS} from '../lib/lantern/classrooms.mjs';
+test('rosters without student 1 select an actual student',()=>{assert.equal(firstAvailableStudent([{id:'5'},{id:'9'}],'1'),'5');assert.equal(firstAvailableStudent([{id:'5'},{id:'9'}],'9'),'9');assert.equal(firstAvailableStudent([]),'')});
+test('small and large classrooms start with a lantern at the centered camera',()=>{for(const columns of [1,2,3,8,14])assert.equal(lanternPhase(0,columns),-LANTERN_FLOW_SECONDS/2);assert.ok(Math.abs(lanternPhase(1,1)+LANTERN_FLOW_SECONDS/2)<8);});
