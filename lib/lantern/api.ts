@@ -4,7 +4,7 @@ import {ensureLegacyClassroom} from './legacy-classroom';
 import {handleClassroom} from './classroom-api';
 import {env} from 'cloudflare:workers';
 import {canReadFile,validateWork,checkFile,hashPassword,verifyPassword,randomToken,digest,MAX_FILE,namePassword} from './domain.mjs';
-const runtime=()=>{const e=env as unknown as {DB:D1Database;BUCKET:R2Bucket;TEACHER_PASSWORD?:string;TEACHER_PASSWORD_VERSION?:string;STUDENT_PASSWORD_VERSION?:string;ROSTER_VERSION?:string;ROSTER?:string;CLASS_CODE?:string;ADMIN_PASSWORD?:string;FILE_STORAGE?:string;LEGACY_CLASSROOM_ID?:string;LEGACY_SCHOOL?:string;LEGACY_CLASS_LABEL?:string;LEGACY_TEACHER_PASSWORD?:string;LEGACY_CLASS_CODE?:string};return {...e,BUCKET:fileStorage(e) as unknown as R2Bucket}};
+const runtime=()=>{const e=env as unknown as {DB:D1Database;BUCKET:R2Bucket;TEACHER_PASSWORD?:string;TEACHER_PASSWORD_VERSION?:string;STUDENT_PASSWORD_VERSION?:string;ROSTER_VERSION?:string;ROSTER?:string;CLASS_CODE?:string;ADMIN_PASSWORD?:string;FILE_STORAGE?:string;PRESERVED_CLASS_CODE_HASH?:string;PRESERVED_TEACHER_CODE_HASH?:string;LEGACY_CLASSROOM_ID?:string;LEGACY_SCHOOL?:string;LEGACY_CLASS_LABEL?:string;LEGACY_TEACHER_PASSWORD?:string;LEGACY_CLASS_CODE?:string};return {...e,BUCKET:fileStorage(e) as unknown as R2Bucket}};
 const json=(data:unknown,status=200,extra:Record<string,string>={})=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow, noarchive',...extra}});
 function fail(message:string,status=400):never{throw Object.assign(new Error(message),{status});}
 const parse=(v:any)=>v?JSON.parse(v):null;

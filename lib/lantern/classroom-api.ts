@@ -1,4 +1,5 @@
 import {starterExample} from './example-data.mjs';
+import {preservedEntryAction,preservedEntryRole} from './preserved-entry.mjs';
 import {deleteOwnClass} from './class-delete.ts';
 import {unusedFiles,cleanupFiles} from './cleanup.ts';
 import {classBackup} from './class-backup.ts';
@@ -6,7 +7,7 @@ import {privateFile} from './private-file.ts';
 import {editRoster,restoreStudent,renumberStudent} from './roster-api.ts';
 import {readOperatingPolicy,usageForClass,reserveUpload,releaseUpload} from './operations.mjs';
 import {hashPassword,verifyPassword,randomToken,digest,namePassword,validateWork,checkFile,canReadFile,MAX_FILE} from './domain.mjs';
-type Store={DB:D1Database;BUCKET:R2Bucket};
+type Store={DB:D1Database;BUCKET:R2Bucket;PRESERVED_CLASS_CODE_HASH?:string;PRESERVED_TEACHER_CODE_HASH?:string};
 const json=(v:unknown,status=200,headers:Record<string,string>={})=>Response.json(v,{status,headers:{'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow, noarchive',...headers}});
 function fail(message:string,status=400):never{throw Object.assign(Error(message),{status})}
 const parse=(s:string|null)=>s?JSON.parse(s):null;
@@ -24,6 +25,7 @@ async function createClassroom(req:Request,e:Store){
  await limit(e,req,'create',8);const p=await readOperatingPolicy(e);if(p.newClassesPaused)fail('신규 학급 개설이 잠시 중지됐어요.',503);if((await e.DB.prepare('SELECT COUNT(*) AS n FROM classrooms').first<any>()).n>=p.maxClasses)fail('신규 학급 수 한도에 도달했어요.',503);const b=await read(req);
  if(typeof b.school!=='string'||!b.school.trim().endsWith('초등학교')||b.school.length>60||typeof b.label!=='string'||!b.label.trim()||b.label.length>40)fail('진주 지역 초등학교 이름과 학급을 입력해 주세요.');
  if(typeof b.password!=='string'||b.password.length<8||b.password.length>128||typeof b.code!=='string'||b.code.length<6||b.code.length>64)fail('교사 비밀번호는 8자 이상, 학급 입장 코드는 6자 이상으로 정해 주세요.');
+ if(await preservedEntryRole(b.code,e))fail('이미 사용 중인 입장 코드예요. 다른 코드를 정해 주세요.',409);
  if(!Array.isArray(b.students)||b.students.length<1||b.students.length>60)fail('학생 명단은 1~60명으로 입력해 주세요.');
  const numbers=new Set();for(const s of b.students){if(!Number.isInteger(s.number)||s.number<1||s.number>99||typeof s.name!=='string'||!s.name.trim()||s.name.length>20||numbers.has(s.number))fail('번호는 1~99의 서로 다른 수로, 이름은 20자 이내로 입력해 주세요.');numbers.add(s.number);}
  const id=crypto.randomUUID();const sql=e.DB;const sorted=[...b.students].sort((a,b)=>a.number-b.number);const initialPasswords=sorted.map(()=>randomToken().slice(0,12));const hashes=await Promise.all(initialPasswords.map(p=>hashPassword(p)));
@@ -36,6 +38,8 @@ async function enterClassroomByCode(req:Request,e:Store):Promise<Response>{
  await limit(e,req,'code-entry',150);
  const b=await read(req);
  if(typeof b.code!=='string'||b.code.length<6||b.code.length>64)fail('학급 입장 코드를 확인해 주세요.',401);
+ const preservedRole=await preservedEntryRole(b.code,e);
+ if(preservedRole)return json({handoff:{action:preservedEntryAction,role:preservedRole}});
  const rooms=await e.DB.prepare("SELECT c.id,c.school,c.label,c.class_code FROM classrooms c WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key='class_archived:'||c.id OR key='class_deleting:'||c.id) ORDER BY c.created LIMIT 101").all<{id:string;school:string;label:string;class_code:string}>();
  const matches=[];
  for(const room of rooms.results)if(await verifyPassword(b.code,room.class_code))matches.push(room);
