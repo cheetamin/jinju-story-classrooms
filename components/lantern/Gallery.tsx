@@ -3,6 +3,8 @@ import {useEffect,useState,useRef} from 'react';
 import {Animal,Visitor,colors,animals} from './Art';
 import {riverLanternLayout} from '../../lib/lantern/classrooms.mjs';
 import {LanternField} from './LanternField';
+import {normalizeClassCode} from '../../lib/lantern/class-code.mjs';
+import {FestivalSound} from './FestivalSound';
 import {FestivalBackdrop} from './FestivalBackdrop';
 import {api,Modal,Student,WorkView,ClassLink,classHref,fileUrl} from './shared';
 export default function Gallery(){
@@ -24,8 +26,8 @@ export default function Gallery(){
  const roster=entered?rows:Array.from({length:22},(_,i)=>({id:String(i+1),name:'',animal:i,published:null}));const layout=riverLanternLayout(roster.length,sceneHeight);const columns=layout.columns;
  const preview=selected?.published?.chapters?.flatMap(c=>c.pages).find(p=>p.imageId)?.imageId;
  if(platform)return <div className="gallery-page festival-fullscreen locked-classroom"><FestivalBackdrop/><main className="classroom-gate">
-  <div className="gate-emblem">✦</div><h1>우리 고장 진주 이야기</h1><p>선생님께 받은 학급 입장 코드로 들어가요.</p>
-  <form ref={handoffForm} method="post" action={handoff?.action} hidden><input type="hidden" name="code" value={code}/><input type="hidden" name="role" value={handoff?.role||'viewer'}/></form>
+  <div className="gate-emblem">✦</div><h1>우리 고장 진주 이야기</h1><p>선생님께 받은 학급 입장 코드로 들어가요. 한글·영문 모두 입력할 수 있어요.</p>
+  <form ref={handoffForm} method="post" action={handoff?.action} hidden><input type="hidden" name="code" value={handoff?.role==='teacher'?normalizeClassCode(code):code}/><input type="hidden" name="role" value={handoff?.role||'viewer'}/></form>
   <form onSubmit={e=>{e.preventDefault();void enterPlatform()}}><label>학급 입장 코드<input type="password" autoComplete="off" value={code} onChange={e=>{setCode(e.target.value);setEntryChoices([])}} required maxLength={64} placeholder="선생님께 받은 코드를 입력해요" disabled={busy}/></label><button className="pixel-button gold full" disabled={busy}>{busy?'학급을 확인하는 중…':'전시관 입장하기 →'}</button></form>
   {error&&<p className="error" role="alert">{error}</p>}
   {entryChoices.length>0&&<section aria-label="입장할 학급 선택"><p>같은 코드를 사용하는 학급이 있어요. 우리 학급을 골라 주세요.</p>{entryChoices.map(room=><button className="pixel-button full" key={room.id} disabled={busy} onClick={()=>void enterPlatform(room.id)}>{room.school} · {room.label}</button>)}</section>}
@@ -33,7 +35,7 @@ export default function Gallery(){
   <a className="pixel-button lavender full" href="/teacher?new=1">교사용 안내 · 새 학급 만들기</a>
  </main></div>;
  if(!entered)return <div className="gallery-page festival-fullscreen locked-classroom"><FestivalBackdrop/><main className="classroom-gate"><div className="gate-emblem">✦</div><h1>우리 고장 진주 이야기</h1><p>{classroom.school} · {classroom.label}</p>{!checked?<p>학급 입장 정보를 확인하고 있어요…</p>:<form onSubmit={enter}>{memberLogin?<><label>내 번호<select value={loginId} onChange={e=>setLoginId(e.target.value)}>{loginRows.map(s=><option key={s.id} value={s.id}>{s.id}번</option>)}</select></label><label>개인 비밀번호<input type="password" autoComplete="current-password" required value={memberPassword} onChange={e=>setMemberPassword(e.target.value)} placeholder="선생님께 받은 개인 비밀번호" disabled={busy}/></label></>:<label>학급 입장 코드<input type="password" autoComplete="off" autoFocus required value={code} onChange={e=>setCode(e.target.value)} placeholder="선생님께 받은 코드를 입력해요" disabled={busy}/></label>}{error&&<p className="error" role="alert">{error}</p>}<button className="pixel-button gold full" disabled={busy}>{busy?'확인 중…':'전시관 입장하기 →'}</button><small>학급 코드 확인 후 개인 비밀번호로 입장해요.</small></form>}<div className="gate-links"><ClassLink href="/teacher">교사 관리실</ClassLink><a href="/teacher?new=1">새 학급 만들기</a></div></main></div>;
- return <div className="gallery-page festival-fullscreen"><main className="festival-viewport">
+ return <div className="gallery-page festival-fullscreen"><main className="festival-viewport"><FestivalSound/>
  <div className="world-scroll" ref={scrollRef} onPointerDown={e=>{if(e.pointerType==='mouse'&&!(e.target as HTMLElement).closest('button'))drag.current={x:e.clientX,scroll:e.currentTarget.scrollLeft}}} onPointerMove={e=>{if(drag.current)e.currentTarget.scrollLeft=drag.current.scroll+drag.current.x-e.clientX}} onPointerUp={()=>{drag.current=null}} onPointerLeave={()=>{drag.current=null}}>
  <div className={'world '+(entered?'entered ':'')+(paused||selected?'paused':'')} style={{'--world-width':columns*150+'px','--lantern-size':layout.size+'px'} as React.CSSProperties}><FestivalBackdrop/><LanternField rows={roster} columns={columns} anchors={layout.anchors} selectedId={selected?.id} onSelect={r=>{if(entered){setSelected(r);setView(false)}else setPanel('entry')}}/><Visitor x={x}/></div></div>
  <header className="festival-hud"><button className="festival-home pixel-button" onClick={()=>{setSelected(null);setView(false);setPanel('');setX(50)}}><span>⌂</span><b>홈</b></button><div className="festival-title"><i className="title-lantern left"/><h1>우리 고장 진주 이야기</h1><i className="title-lantern right"/><div className="title-cloud left">☁</div><div className="title-cloud right">☁</div></div><nav className="festival-top-nav"><button className="pixel-button" onClick={()=>setPanel(entered?'class':'entry')}><span>👧🏻👦🏻</span><b>우리 반</b></button><button className="pixel-button" onClick={()=>setPanel(entered?'works':'entry')}><span>📖</span><b>작품 모음</b></button><button className="pixel-button" onClick={()=>setPanel('map')}><span>🗺️</span><b>진주 지도</b></button></nav><p className="festival-instruction">✧ 동물 유등을 클릭해 친구들의 지역 소개 자료를 감상해요 ✧</p></header>

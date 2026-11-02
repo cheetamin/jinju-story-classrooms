@@ -10,6 +10,7 @@ source=source.replace("'./file-storage.mjs'",JSON.stringify(new URL('../lib/lant
 source=source.replace("'./admin-api'",JSON.stringify(new URL('../lib/lantern/admin-api.ts',import.meta.url).href));
 source=source.replace("'./legacy-classroom'",JSON.stringify(new URL('../lib/lantern/legacy-classroom.ts',import.meta.url).href));
 source=source.replace("'./classroom-api'",JSON.stringify(new URL('../lib/lantern/classroom-api.ts',import.meta.url).href));
+source=source.replace("'./class-code.mjs'",JSON.stringify(new URL('../lib/lantern/class-code.mjs',import.meta.url).href));
 fs.mkdirSync(new URL('../.sites-runtime/',import.meta.url),{recursive:true});const path=new URL('../.sites-runtime/test-api.mjs',import.meta.url);fs.writeFileSync(path,ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
 const {handle}=await import(path.href+'?t='+Date.now());
 export const fetchInProcess=(url,options)=>handle(new Request(url,options));
