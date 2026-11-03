@@ -1,8 +1,9 @@
+import {revealCredential} from './credential-vault.mjs';
 import {classBackup} from './class-backup.ts';
 import {privateFile} from './private-file.ts';
 import {readOperatingPolicy,validateOperatingPolicy,usageForClass} from './operations.mjs';
 import {digest,randomToken,hashPassword,verifyPassword} from './domain.mjs';
-type Env={FILE_STORAGE?:string;DB:D1Database;BUCKET:R2Bucket;ADMIN_PASSWORD?:string};
+type Env={FILE_STORAGE?:string;DB:D1Database;BUCKET:R2Bucket;ADMIN_PASSWORD?:string;CREDENTIAL_VAULT_KEY?:string};
 const json=(data:unknown,status=200,headers:Record<string,string>={})=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow, noarchive',...headers}});
 function fail(message:string,status=400):never{throw Object.assign(Error(message),{status})}
 async function read(req:Request){const raw=await req.text();if(raw.length>8192)fail('요청이 너무 커요.',413);try{return JSON.parse(raw)}catch{fail('입력을 확인해 주세요.')}}
@@ -17,6 +18,14 @@ export async function handleAdmin(req:Request,e:Env){try{
  const cookie=(raw:string,seconds:number)=>`lantern_admin=${raw}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${seconds}${url.protocol==='https:'?'; Secure':''}`;
  if(path==='login'&&req.method==='POST'){const b=await read(req);await authenticate(e,req,b.password);const raw=randomToken();await e.DB.prepare('INSERT INTO sessions(token,role,student_id,expires) VALUES(?,?,?,?)').bind(await digest(raw),'admin',await digest(e.ADMIN_PASSWORD),Date.now()+1800000).run();return json({ok:true},200,{'Set-Cookie':cookie(raw,1800)})}
  if(!session)fail('전체 관리자만 사용할 수 있어요.',401);
+ if(path==='credentials'&&req.method==='POST'){
+ if(url.searchParams.has('class'))fail('전체 관리자 화면에서 다시 확인해 주세요.',403);
+ const b=await read(req);await authenticate(e,req,b.password);
+ if(typeof b.classId!=='string'||!/^[a-f0-9-]{36}$/.test(b.classId))fail('학급을 선택해 주세요.');
+ const room=await e.DB.prepare('SELECT id,school,label,class_code,teacher_password FROM classrooms WHERE id=?').bind(b.classId).first<any>();if(!room)fail('학급을 찾을 수 없어요.',404);
+ if(await marker(e,'class_deleting:'+room.id))fail('정리 중인 학급이에요.',410);
+ if(!e.CREDENTIAL_VAULT_KEY)fail('코드 확인을 위한 보안 설정이 필요해요.',503);
+ return json({school:room.school,label:room.label,classCode:await revealCredential(e,room,'class'),teacherCode:await revealCredential(e,room,'teacher')});}
  if(path==='logout'&&req.method==='POST'){await e.DB.prepare('DELETE FROM sessions WHERE token=?').bind(session.token).run();return json({ok:true},200,{'Set-Cookie':cookie('',0)})}
  if(path==='backup'&&req.method==='GET')return json(await classBackup(e,url.searchParams.get('classId')||''));
  if(path.startsWith('files/')&&req.method==='GET'){const f=await e.DB.prepare('SELECT * FROM class_files WHERE id=?').bind(path.slice(6)).first<any>();if(!f)fail('파일을 찾을 수 없어요.',404);return await privateFile(req,e,f)}
@@ -42,6 +51,8 @@ export async function handleAdmin(req:Request,e:Env){try{
  e.DB.prepare(`DELETE FROM upload_reservations WHERE class_id IN (${slots})`).bind(...ids),
  e.DB.prepare(`DELETE FROM settings WHERE key IN (${slots})`).bind(...ids.map(id=>'class_deleting:'+id)),
  e.DB.prepare(`DELETE FROM settings WHERE key IN (${slots})`).bind(...ids.map(id=>'learning_info:'+id)),
+ e.DB.prepare(`DELETE FROM settings WHERE key IN (${slots})`).bind(...ids.map(id=>'credential_vault:'+id+':class')),
+ e.DB.prepare(`DELETE FROM settings WHERE key IN (${slots})`).bind(...ids.map(id=>'credential_vault:'+id+':teacher')),
  e.DB.prepare('DELETE FROM settings WHERE key=?').bind(planKey)]);return json({ok:true,school:d.school,deletedClasses:d.rooms.length,deletedFiles:d.files.length,freedBytes:d.bytes})}
  return json({error:'페이지를 찾을 수 없어요.'},404);
 }catch(e:any){return json({error:e.status?e.message:'처리하지 못했어요. 잠시 후 다시 시도해 주세요.'},e.status||503)}}
