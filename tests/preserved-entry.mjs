@@ -8,7 +8,7 @@ async function enter(code){return fetchInProcess('https://test.local/api/classro
 let response=await enter('강빛초 12');
 assert.equal(response.status,200,'the preserved class code must be recognized without copying the class into the trial DB');
 let result=await response.json();assert.equal(result.handoff.role,'viewer');
-assert.equal(result.handoff.action,'https://jinju-animal-lantern-class44.workspace-889499.chatgpt.site/api/entry-from-hub');
+assert.equal(result.handoff.action,'/api/preserved-entry');
 assert.equal(response.headers.get('set-cookie'),null);
 assert.ok(!JSON.stringify(result).includes('test-preserved-class-code'));
 response=await enter('test-preserved-teacher-code');result=await response.json();assert.equal(result.handoff.role,'teacher');
