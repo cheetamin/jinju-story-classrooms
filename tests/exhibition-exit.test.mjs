@@ -1,0 +1,5 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {completeExhibitionExit} from '../lib/lantern/exhibition-exit.mjs';
+test('return to entry waits for logout and drops the old class query',async()=>{const events=[];let release;const pending=completeExhibitionExit(()=>new Promise(resolve=>{release=()=>{events.push('logout');resolve()}}),href=>events.push(href));assert.deepEqual(events,[]);release();await pending;assert.deepEqual(events,['logout','/?entry=1']);});
+test('logout failure keeps the farewell open for retry',async()=>{let navigated=false;await assert.rejects(completeExhibitionExit(async()=>{throw Error('temporary outage')},()=>{navigated=true}),/temporary outage/);assert.equal(navigated,false)});
+test('an expired or removed class can still return to the code entry screen',async()=>{for(const status of [401,410]){let href;await completeExhibitionExit(async()=>{throw Object.assign(Error('expired'),{status})},value=>{href=value});assert.equal(href,'/?entry=1')}});
