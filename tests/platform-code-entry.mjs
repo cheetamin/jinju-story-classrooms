@@ -27,6 +27,8 @@ assert.equal(status.classroom.id, a.id);
 assert.equal((await call('students?class=' + a.id, undefined, 200, cookie)).body[0].name, '1번 친구');
 assert.ok(!JSON.stringify(entry.body).includes(input.code));
 
+const teacherEntry=await call('classrooms/enter',{code:input.password});assert.equal(teacherEntry.body.href,'/teacher?class='+a.id);assert.equal(teacherEntry.body.role,'teacher');assert.ok(!JSON.stringify(teacherEntry.body).includes(input.password));
+const {hashPassword}=await import('../lib/lantern/domain.mjs');const {namePassword}=await import('../lib/lantern/domain.mjs');const teacherName='가상쌤';await globalThis.__testEnv.DB.prepare('UPDATE classrooms SET teacher_password=? WHERE id=?').bind(await hashPassword(namePassword(teacherName)),a.id).run();assert.equal((await call('classrooms/enter',{code:teacherName})).body.href,'/teacher?class='+a.id);
 const b = (await call('classrooms/create', {...input, school: '다른가상초등학교'})).body;
 const ambiguous = await call('classrooms/enter', {code: 'rkdqlcch12'});
 assert.deepEqual(new Set(ambiguous.body.choices.map(room => room.id)), new Set([a.id, b.id]));

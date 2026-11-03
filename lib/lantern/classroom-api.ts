@@ -44,19 +44,21 @@ async function enterClassroomByCode(req:Request,e:Store):Promise<Response>{
  if(typeof b.code!=='string'||normalizeClassCode(b.code).length<6||normalizeClassCode(b.code).length>64)fail('학급 입장 코드를 확인해 주세요.',401);
  const preservedRole=await preservedEntryRole(b.code,e);
  if(preservedRole)return json({handoff:{action:preservedEntryAction,role:preservedRole}});
- const rooms=await e.DB.prepare("SELECT c.id,c.school,c.label,c.class_code FROM classrooms c WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key='class_archived:'||c.id OR key='class_deleting:'||c.id) ORDER BY c.created LIMIT 101").all<{id:string;school:string;label:string;class_code:string}>();
- const matches=[];
- for(const room of rooms.results)if(await verifyClassCode(b.code,room.class_code))matches.push(room);
+ const rooms=await e.DB.prepare("SELECT c.id,c.school,c.label,c.class_code,c.teacher_password FROM classrooms c WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key='class_archived:'||c.id OR key='class_deleting:'||c.id) ORDER BY c.created LIMIT 101").all<{id:string;school:string;label:string;class_code:string;teacher_password:string}>();
+ const matches:{id:string;school:string;label:string;role:'viewer'|'teacher';password?:string}[]=[];
+ for(const room of rooms.results)if(await verifyClassCode(b.code,room.class_code))matches.push({...room,role:'viewer'});
+ if(!matches.length){await limit(e,req,'teacher-code-entry',15);const normalized=normalizeClassCode(b.code);for(const room of rooms.results){const candidate=await verifyPassword(b.code,room.teacher_password)?b.code:normalized!==b.code&&await verifyPassword(normalized,room.teacher_password)?normalized:null;if(candidate)matches.push({...room,role:'teacher',password:candidate})}}
+
  if(!matches.length)fail('학급 입장 코드를 확인해 주세요.',401);
  if(matches.length>1&&!b.classId)return json({choices:matches.map(({id,school,label})=>({id,school,label}))});
  const room=b.classId?matches.find(room=>room.id===b.classId):matches[0];
  if(!room)fail('학급 입장 코드를 확인해 주세요.',401);
- const target=new URL(req.url);target.pathname='/api/auth/class';target.search='';target.searchParams.set('class',room.id);
+ const target=new URL(req.url);target.pathname=room.role==='teacher'?'/api/auth/teacher':'/api/auth/class';target.search='';target.searchParams.set('class',room.id);
  const headers=new Headers(req.headers);headers.delete('content-length');headers.set('Content-Type','application/json');
- const response=await handleClassroom(new Request(target,{method:'POST',headers,body:JSON.stringify({code:b.code})}),e);
+ const response=await handleClassroom(new Request(target,{method:'POST',headers,body:JSON.stringify(room.role==='teacher'?{password:room.password}:{code:b.code})}),e);
  const data=await response.json() as Record<string,unknown>;
  const sessionCookie=response.headers.get('set-cookie');
- return json(response.ok?{...data,href:'/gallery?class='+room.id}:data,response.status,sessionCookie?{'Set-Cookie':sessionCookie}:{});
+ return json(response.ok?{...data,href:(room.role==='teacher'?'/teacher?class=':'/gallery?class=')+room.id}:data,response.status,sessionCookie?{'Set-Cookie':sessionCookie}:{});
 }
 export async function handleClassroom(req:Request,e:Store):Promise<Response>{try{
  const url=new URL(req.url),path=url.pathname.replace(/^\/api\//,''),method=req.method,roomId=url.searchParams.get('class')||'';
