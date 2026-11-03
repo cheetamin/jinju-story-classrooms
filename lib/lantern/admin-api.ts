@@ -41,6 +41,7 @@ export async function handleAdmin(req:Request,e:Env){try{
  e.DB.prepare(`DELETE FROM student_archives WHERE class_id IN (${slots})`).bind(...ids),
  e.DB.prepare(`DELETE FROM upload_reservations WHERE class_id IN (${slots})`).bind(...ids),
  e.DB.prepare(`DELETE FROM settings WHERE key IN (${slots})`).bind(...ids.map(id=>'class_deleting:'+id)),
+ e.DB.prepare(`DELETE FROM settings WHERE key IN (${slots})`).bind(...ids.map(id=>'learning_info:'+id)),
  e.DB.prepare('DELETE FROM settings WHERE key=?').bind(planKey)]);return json({ok:true,school:d.school,deletedClasses:d.rooms.length,deletedFiles:d.files.length,freedBytes:d.bytes})}
  return json({error:'페이지를 찾을 수 없어요.'},404);
 }catch(e:any){return json({error:e.status?e.message:'처리하지 못했어요. 잠시 후 다시 시도해 주세요.'},e.status||503)}}

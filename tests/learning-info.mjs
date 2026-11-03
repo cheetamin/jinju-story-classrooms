@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';import {fetchInProcess} from './inprocess.mjs';
+const origin='https://test.local';
+async function call(path,data,cookie='',status=200){const r=await fetchInProcess(origin+'/api/'+path,{method:data===undefined?'GET':'POST',headers:{Origin:origin,'Content-Type':'application/json','X-Lantern-Request':'1',Cookie:cookie},body:data===undefined?undefined:JSON.stringify(data)});const b=await r.json();assert.equal(r.status,status,path+' '+JSON.stringify(b));return {body:b,cookie:r.headers.get('set-cookie')?.split(';')[0]||cookie}}
+await call('learning-info',undefined,'',401);
+const teacher=await call('auth/teacher',{password:globalThis.__testEnv.TEACHER_PASSWORD});const initial=(await call('learning-info',undefined,teacher.cookie)).body;
+assert.equal(initial.doc.sections.length,6);assert.equal(initial.revision,0);
+const viewer=await call('auth/class',{code:globalThis.__testEnv.CLASS_CODE});await call('teacher/learning-info',{...initial},viewer.cookie,403);
+const legacy=structuredClone(initial);legacy.doc.sections[0].cards[0].text='교사가 정리한 수업 내용';const saved=(await call('teacher/learning-info',legacy,teacher.cookie)).body;assert.equal(saved.revision,1);
+assert.equal((await call('learning-info',undefined,viewer.cookie)).body.doc.sections[0].cards[0].text,'교사가 정리한 수업 내용');await call('teacher/learning-info',legacy,teacher.cookie,409);
+const input={school:'시험초등학교',label:'2반',password:'test-room-teacher',code:'test-room-entry',students:[{number:1,name:'가상학생'}]};const a=(await call('classrooms/create',input)).body,b=(await call('classrooms/create',{...input,label:'3반'})).body;
+const ta=await call('auth/teacher?class='+a.id,{password:input.password}),tb=await call('auth/teacher?class='+b.id,{password:input.password});
+const da=(await call('learning-info?class='+a.id,undefined,ta.cookie)).body;assert.notEqual(da.doc.sections[0].cards[0].text,'교사가 정리한 수업 내용');
+await call('teacher/learning-info?class='+a.id,{...da,revision:3},ta.cookie,409);
+da.doc.sections[0].cards[0].text='A반의 수업 자료';await call('teacher/learning-info?class='+a.id,da,ta.cookie);
+assert.notEqual((await call('learning-info?class='+b.id,undefined,tb.cookie)).body.doc.sections[0].cards[0].text,'A반의 수업 자료');await call('teacher/learning-info?class='+b.id,da,ta.cookie,401);
+const invalid=structuredClone(da);invalid.doc.sections[0].cards[0].text='';await call('teacher/learning-info?class='+a.id,invalid,ta.cookie,400);
+const foreign=await fetchInProcess(origin+'/api/teacher/learning-info',{method:'POST',headers:{Origin:'https://foreign.test',Cookie:teacher.cookie,'X-Lantern-Request':'1'},body:JSON.stringify(legacy)});assert.equal(foreign.status,403);
+await globalThis.__testEnv.DB.prepare('INSERT INTO settings(key,value) VALUES(?,?)').bind('class_deleting:'+a.id,'1').run();
+await call('teacher/learning-info?class='+a.id,{...da,revision:1},ta.cookie,410);
+console.log('PASS: authenticated lesson reading, teacher-only edits, class/legacy isolation, stale-edit conflict, schema limits and origin protection');
