@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';import {fetchInProcess} from './inprocess.mjs';
+const e=globalThis.__testEnv;e.ADMIN_PASSWORD='synthetic-owner-password';const jars={};
+async function call(who,path,data,status=200,origin='https://test.local'){const r=await fetchInProcess('https://test.local/api/'+path,{method:data===undefined?'GET':'POST',headers:{Origin:origin,'X-Lantern-Request':'1','X-Lantern-Context':'gallery','Content-Type':'application/json',Cookie:jars[who]||''},body:data===undefined?undefined:JSON.stringify(data)});const b=await r.json();assert.equal(r.status,status,path+' '+JSON.stringify(b));if(r.headers.get('set-cookie'))jars[who]=r.headers.get('set-cookie').split(';')[0];return b}
+const room=await call('a','classrooms/create',{school:'설문시험초등학교',label:'4학년 2반',password:'synthetic-teacher',code:'synthetic-class',students:[{number:1,name:'가상학생'}]});const scoped='feedback?class='+room.id;
+await call('none',scoped,{hearts:4},401);await call('a','auth/class?class='+room.id,{code:'synthetic-class'});
+for(const hearts of [0,6,2.5,'5',null])await call('a',scoped,{hearts},400);
+await call('a',scoped,{hearts:5,comment:'가'.repeat(301)},400);await call('a',scoped,{hearts:5},403,'https://foreign.test');
+const first=await call('a',scoped,{hearts:4,comment:'  다음에는 더 다양한 동물이 있으면 좋겠어요!  ',school:'위조학교',studentId:'1'});assert.equal(first.saved,true);
+assert.equal((await call('a',scoped,{hearts:1,comment:'retry changed'})).duplicate,true);
+const roleName='lantern_room_'+room.id.replaceAll('-','')+'_viewer',rawToken=jars.a.split('=')[1];jars.alias=roleName.replace('_viewer','')+'='+rawToken+'; '+roleName+'=invalidA';assert.equal((await call('alias',scoped,{hearts:1})).duplicate,true);jars.alias=jars.alias.replace('invalidA','invalidB');assert.equal((await call('alias',scoped,{hearts:1})).duplicate,true); 
+await call('b','auth/class?class='+room.id,{code:'synthetic-class'});await call('b',scoped,{hearts:5});
+await call('a','admin/feedback',undefined,401);await call('owner','admin/login',{password:e.ADMIN_PASSWORD});const result=await call('owner','admin/feedback');assert.equal(result.total,2);assert.equal(result.average,4.5);assert.equal(result.distribution.find(r=>r.hearts===4).count,1);assert.equal(result.rows.find(r=>r.hearts===4).comment,'다음에는 더 다양한 동물이 있으면 좋겠어요!');assert.equal(result.rows[0].school,'설문시험초등학교');assert.ok(!JSON.stringify(result).includes('receipt'));assert.ok(!JSON.stringify(result).includes('studentId'));
+// More than one admin page; pagination is by immutable id even with identical timestamps.
+for(let i=0;i<51;i++)await e.DB.prepare('INSERT INTO exhibition_feedback(receipt,school,label,hearts,comment,created) VALUES(?,?,?,?,?,?)').bind('synthetic-'+i,'가상학교','4반',3,'',1).run();
+const page1=await call('owner','admin/feedback'),page2=await call('owner','admin/feedback?before='+page1.nextBefore);assert.equal(page1.rows.length,50);assert.equal(page2.rows.length,3);assert.equal(new Set([...page1.rows,...page2.rows].map(r=>r.id)).size,53);await call('owner','admin/feedback?before=bad',undefined,400);
+const stored=(await e.DB.prepare('SELECT * FROM exhibition_feedback WHERE hearts=4').first());assert.equal(stored.school,'설문시험초등학교');assert.ok(!Object.values(stored).some(v=>String(v).includes('lantern_room')));
+await e.DB.prepare("INSERT INTO settings(key,value) VALUES(?,?)").bind('class_archived:'+room.id,'1').run();await call('a',scoped,{hearts:5},410);await e.DB.prepare('DELETE FROM settings WHERE key=?').bind('class_archived:'+room.id).run();
+await e.DB.prepare("WITH RECURSIVE n(x) AS (SELECT 1 UNION ALL SELECT x+1 FROM n WHERE x<4947) INSERT INTO exhibition_feedback(receipt,school,label,hearts,comment,created) SELECT 'capacity-'||x,'가상학교','4반',3,'',1 FROM n").run();
+await call('c','auth/class?class='+room.id,{code:'synthetic-class'});await call('c',scoped,{hearts:5},503);assert.equal((await e.DB.prepare('SELECT COUNT(*) AS n FROM exhibition_feedback').first()).n,5000);await call('a',scoped,{hearts:4});
+console.log('PASS: authenticated optional feedback, server class metadata, validation, session deduplication, owner-only summary and stable pagination');

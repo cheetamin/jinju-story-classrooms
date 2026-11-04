@@ -1,3 +1,4 @@
+import {listFeedback} from './feedback.mjs';
 import {revealCredential} from './credential-vault.mjs';
 import {classBackup} from './class-backup.ts';
 import {privateFile} from './private-file.ts';
@@ -18,6 +19,7 @@ export async function handleAdmin(req:Request,e:Env){try{
  const cookie=(raw:string,seconds:number)=>`lantern_admin=${raw}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${seconds}${url.protocol==='https:'?'; Secure':''}`;
  if(path==='login'&&req.method==='POST'){const b=await read(req);await authenticate(e,req,b.password);const raw=randomToken();await e.DB.prepare('INSERT INTO sessions(token,role,student_id,expires) VALUES(?,?,?,?)').bind(await digest(raw),'admin',await digest(e.ADMIN_PASSWORD),Date.now()+1800000).run();return json({ok:true},200,{'Set-Cookie':cookie(raw,1800)})}
  if(!session)fail('전체 관리자만 사용할 수 있어요.',401);
+ if(path==='feedback'&&req.method==='GET')return json(await listFeedback(e.DB,url.searchParams.get('before')));
  if(path==='credentials'&&req.method==='POST'){
  if(url.searchParams.has('class'))fail('전체 관리자 화면에서 다시 확인해 주세요.',403);
  const b=await read(req);await authenticate(e,req,b.password);

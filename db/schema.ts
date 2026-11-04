@@ -1,4 +1,5 @@
-import {sqliteTable,text,integer,index,blob} from 'drizzle-orm/sqlite-core';
+import {sql} from 'drizzle-orm';
+import {sqliteTable,text,integer,index,blob,check} from 'drizzle-orm/sqlite-core';
 export const settings=sqliteTable('settings',{key:text('key').primaryKey(),value:text('value').notNull()});
 export const students=sqliteTable('students',{id:text('id').primaryKey(),name:text('name').notNull(),animal:integer('animal').notNull(),password:text('password').notNull()});
 export const works=sqliteTable('works',{studentId:text('student_id').primaryKey(),draft:text('draft'),submitted:text('submitted'),published:text('published'),status:text('status').notNull().default('empty'),feedback:text('feedback').notNull().default(''),revision:integer('revision').notNull().default(0),updated:text('updated')});
@@ -18,3 +19,5 @@ export const fileObjects=sqliteTable('file_objects',{id:text('id').primaryKey(),
 export const studentArchives=sqliteTable('student_archives',{id:text('id').primaryKey(),classId:text('class_id').notNull(),number:integer('number').notNull(),name:text('name').notNull(),animal:integer('animal').notNull(),password:text('password').notNull(),archived:integer('archived').notNull()});
 
 export const storageUsage=sqliteTable('storage_usage',{scope:text('scope').primaryKey(),bytes:integer('bytes').notNull(),files:integer('files').notNull()});
+
+export const exhibitionFeedback=sqliteTable('exhibition_feedback',{id:integer('id').primaryKey({autoIncrement:true}),receipt:text('receipt').notNull().unique(),school:text('school').notNull(),label:text('label').notNull(),hearts:integer('hearts').notNull(),comment:text('comment').notNull().default(''),created:integer('created').notNull()},t=>[check('feedback_hearts_range',sql`${t.hearts} BETWEEN 1 AND 5`),check('feedback_comment_length',sql`length(${t.comment})<=300`)]);

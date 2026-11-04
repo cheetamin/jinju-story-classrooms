@@ -1,0 +1,7 @@
+# Optional child-friendly exit feedback
+
+Add a short optional survey to the existing Cloudflare exhibition farewell. Keep thanks, signature, copyright and return/reset. Choose 1–5 hearts with plain Korean feeling labels; optionally write up to 300 characters. No name/student ID collection; warn against personal details. Send and skip are separate explicit actions; send does not log out until success/return. Preserve input on errors and allow exit anyway.
+
+Store all participating independent/preserved classrooms in the existing public Worker's D1 so the one owner admin sees all results. Resolve class metadata from authenticated server context, never client labels. Preserved users are validated through the existing fixed-origin status relay; feedback itself bypasses that relay. Store school/class label, hearts, optional comment, time and a non-reversible session receipt for retry deduplication. No student identity, raw cookie/IP or credentials. Bound text, request size, per-IP rate and total rows (5,000). Only owner-admin session may list summaries and paginated comments; teachers/viewers cannot read them. Add a satisfaction tab to the admin screen. Existing real works and data, free bindings, development branch and main stay unchanged.
+
+Approach: own in-app form/database, chosen by implementer under user's standing autonomous instruction. External forms add a dependency and would not integrate owner review; browser-only storage would not deliver feedback to the owner. No new account, external survey service or paid resource.

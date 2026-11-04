@@ -1,0 +1,11 @@
+'use client';
+import {useEffect,useState} from 'react';
+import {api} from './shared';
+type Feedback={id:number;school:string;label:string;hearts:number;comment:string;created:number};
+type Result={total:number;average:number|null;distribution:{hearts:number;count:number}[];rows:Feedback[];nextBefore:string|null};
+export function AdminFeedback(){
+ const [data,setData]=useState<Result|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ async function load(more=false){setBusy(true);setError('');try{const next:Result=await api('admin/feedback'+(more&&data?.nextBefore?'?before='+data.nextBefore:''));setData(old=>more&&old?{...next,rows:[...old.rows,...next.rows]}:next)}catch(e:any){setError(e.message)}finally{setBusy(false)}}
+ useEffect(()=>{void load()},[]);
+ return <section className="admin-feedback" aria-labelledby="admin-feedback-title"><div className="teacher-toolbar"><div><h2 id="admin-feedback-title">학생들의 마음 우체통</h2><p className="muted">전시관을 나갈 때 남긴 선택 설문입니다. 이름과 학생 번호는 수집하지 않습니다.</p></div><button disabled={busy} onClick={()=>void load()}>설문 새로고침</button></div>{error&&<p className="notice error" role="alert">{error}</p>}{!data?<p role="status">{busy?'후기를 불러오고 있어요…':'설문 새로고침을 눌러 주세요.'}</p>:<><div className="feedback-overview"><div><small>모인 마음</small><strong>{data.total}<em>개</em></strong></div><div><small>평균 하트</small><strong>{data.average??'—'}<em>/ 5</em></strong></div></div><div className="feedback-distribution" aria-label="하트 개수별 응답 수">{[5,4,3,2,1].map(h=>{const n=data.distribution.find(r=>r.hearts===h)?.count||0;return <div key={h}><span>{'♥'.repeat(h)}<i className="sr-only"> 하트 {h}개</i></span><progress max={data.total||1} value={n} aria-label={`하트 ${h}개 ${n}명`}/><b>{n}개</b></div>})}</div>{!data.total?<p className="notice">아직 도착한 후기가 없어요. 전시관의 ‘나가기’ 화면에서 남길 수 있습니다.</p>:<div className="feedback-inbox">{data.rows.map(row=><article key={row.id}><header><b aria-label={`하트 ${row.hearts}개`}>{'♥'.repeat(row.hearts)}</b><time dateTime={new Date(row.created).toISOString()}>{new Date(row.created).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}</time></header><small>{row.school} · {row.label}</small><p>{row.comment||'하트로 마음을 전했어요. (글 없음)'}</p></article>)}</div>}{data.nextBefore&&<button className="primary" disabled={busy} onClick={()=>void load(true)}>{busy?'불러오는 중…':'이전 후기 더 보기'}</button>}</>}</section>;
+}
