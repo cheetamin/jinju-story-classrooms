@@ -1,2 +1,0 @@
-'use client';
-export function DemoAccountGuide({compact=false}:{compact?:boolean}){return <aside className={'demo-account-guide '+(compact?'compact':'')}><b>처음 오신 선생님은 ‘교사용’으로 체험해 보세요</b><p>학급 코드로 입장한 뒤 제작실에서 <strong>교사용 · 체험 계정</strong>을 고르고, 개인 비밀번호 <code>rytkdyd</code> <span>(교사용)</span>을 입력하세요.</p>{!compact&&<p>공통 ‘교사용 예시’로 작성 방법을 살펴보고, 체험 계정에서 글·사진 작성과 제출을 해 보세요. 교사 관리실에서 체험 작품을 승인하면 전시 화면에서도 볼 수 있어요.</p>}<small>체험 작품은 학급 안의 별도 작업 공간에 저장됩니다.</small></aside>}
