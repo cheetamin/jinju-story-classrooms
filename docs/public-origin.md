@@ -1,6 +1,6 @@
 # Public classroom origin
 
-Share https://jinju-story-trial-20261102.rkdrkals0227.workers.dev . The root entry form recognizes the preserved class codes and new independent classrooms. Preserved entry posts to the same origin at `/api/preserved-entry`; the original server verifies the credential. Gallery, studio, teacher, information cards and attachments stay on this public origin.
+Share https://jinju-story-trial-20261102.cheetamin.workers.dev . The root entry form recognizes the preserved class codes and new independent classrooms. Preserved entry posts to the same origin at `/api/preserved-entry`; the original server verifies the credential. Gallery, studio, teacher, information cards and attachments stay on this public origin.
 
 The existing class remains in its original Sites database and file storage. No student records or files were migrated into the independent trial D1. The public Worker relays only allowlisted original API routes to a fixed original backend. Original authorization and class scope remain enforced there. Preserved sessions use a separate HttpOnly, Secure, SameSite=Strict cookie that carries an allowed original cookie name plus its opaque token. New class URLs with a `class` query bypass this relay.
 

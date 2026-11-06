@@ -4,7 +4,7 @@
 
 - [현재 운영 사이트](https://jinju-animal-lantern-class44.workspace-889499.chatgpt.site/)
 - [교사용 안내·새 학급 만들기](https://jinju-animal-lantern-class44.workspace-889499.chatgpt.site/teacher?new=1)
-- [GitHub 소스 저장소](https://github.com/rkdrkals0227/jinju-story-classrooms)에서 버전을 관리합니다. GitHub는 소스 관리 공간입니다. GitHub Pages만으로는 이 앱의 인증·DB·파일 저장 API를 실행할 수 없습니다.
+- [GitHub 소스 저장소](https://github.com/cheetamin/jinju-story-classrooms)에서 버전을 관리합니다. GitHub는 소스 관리 공간입니다. GitHub Pages만으로는 이 앱의 인증·DB·파일 저장 API를 실행할 수 없습니다.
 
 ## 선생님 사용 순서
 
