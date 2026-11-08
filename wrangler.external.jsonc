@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "jinju-story-trial-20261102",
+  "name": "our-region-lanterns",
   "main": "worker/index.ts",
   "compatibility_date": "2026-05-15",
   "compatibility_flags": [
@@ -13,8 +13,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "jinju-story-trial-20261102-db",
-      "database_id": "c3ca8832-2a2e-4d2a-aaaa-86296482c39e",
+      "database_name": "our-region-lanterns-db",
+      "database_id": "b77c0d7b-0882-4763-9fd3-8d128bf5395b",
       "migrations_dir": "drizzle"
     }
   ]

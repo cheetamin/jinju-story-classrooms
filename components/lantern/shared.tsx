@@ -1,4 +1,5 @@
 'use client';
+import {useRegion} from './RegionContext';
 import {optimizeUpload} from '../../lib/lantern/image-upload';
 import {useEffect,useRef} from 'react';
 export type ChapterPage={heading:string;text:string;imageId:string;caption:string;source:string};
@@ -14,7 +15,7 @@ export function Attachment({id,index}:{id:string;index:number}){const [type,setT
 import {useState as requireReactState} from 'react';
 export const statusLabel:Record<string,string>={empty:'준비 중',pending:'승인 기다리는 중',approved:'전시 중',revision:'수정 요청',hidden:'비공개'};
 export function ClassLink({href,children,...rest}:{href:string;children:React.ReactNode;[key:string]:any}){const [target,setTarget]=requireReactState(href);useEffect(()=>setTarget(classHref(href)),[href]);return <a href={target} {...rest}>{children}</a>}
-export function PageHeader({active}:{active:string}){const [label,setLabel]=requireReactState('학급 정보를 확인하고 있어요…');useEffect(()=>{api('status').then(r=>{if(r.classroom)setLabel(r.classroom.school+' · '+r.classroom.label);else setLabel(r.platform?'학급 입장 코드를 입력해 주세요':'우리 학급')}).catch(()=>{})},[]);return <header className="site-header"><ClassLink className="brand" href="/gallery"><span className="brand-symbol">✦</span><span>남강 동물 유등 전시관<small>{label}</small></span></ClassLink><nav><ClassLink className={active==='gallery'?'active':''} href="/gallery">전시관</ClassLink><ClassLink className={active==='studio'?'active':''} href="/studio">작품 제작실</ClassLink><ClassLink className={active==='teacher'?'active':''} href="/teacher">교사 관리실</ClassLink></nav></header>}
+export function PageHeader({active}:{active:string}){const region=useRegion();const [label,setLabel]=requireReactState('학급 정보를 확인하고 있어요…');useEffect(()=>{api('status').then(r=>{if(r.classroom)setLabel(r.classroom.school+' · '+r.classroom.label);else setLabel(r.platform?'학급 입장 코드를 입력해 주세요':'우리 학급')}).catch(()=>{})},[]);return <header className="site-header"><ClassLink className="brand" href="/gallery"><span className="brand-symbol">✦</span><span>{region.title}<small>{label}</small></span></ClassLink><nav><ClassLink className={active==='gallery'?'active':''} href="/gallery">전시관</ClassLink><ClassLink className={active==='studio'?'active':''} href="/studio">작품 제작실</ClassLink><ClassLink className={active==='teacher'?'active':''} href="/teacher">교사 관리실</ClassLink></nav></header>}
 
 import {ChapterBook} from './ChapterBook';
 

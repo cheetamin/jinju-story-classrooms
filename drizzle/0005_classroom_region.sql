@@ -1,0 +1,2 @@
+ALTER TABLE classrooms ADD COLUMN region TEXT NOT NULL DEFAULT '진주';
+ALTER TABLE classrooms ADD COLUMN region_revision INTEGER NOT NULL DEFAULT 0;

@@ -1,12 +1,9 @@
-import {preservedProxy} from '../lib/lantern/preserved-proxy.mjs';
 import handler from "vinext/server/fetch-handler";
 import { runWithConnectorBinding } from "../lib/connector-context";
 import type { ConnectorBinding } from "../lib/connector-contract.mjs";
 
 const worker = {
   async fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext<{ CONNECTORS?: ConnectorBinding }>) {
-    const original = await preservedProxy(request,fetch,(env as unknown as {ENTRY_HUB_RATE_SECRET?:string}).ENTRY_HUB_RATE_SECRET);
-    if (original) return original;
     let binding = ctx.props?.CONNECTORS;
     // Local preview emulates the same request-scoped capability. This branch and
     // the auxiliary service binding are absent from production builds.

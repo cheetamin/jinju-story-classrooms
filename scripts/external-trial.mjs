@@ -1,4 +1,5 @@
 import fs from 'node:fs';import {spawnSync} from 'node:child_process';
+await import('./check-independent-deploy.mjs');
 const mode=process.argv[2]||'check';const config=JSON.parse(fs.readFileSync('wrangler.external.jsonc','utf8'));
 if(config.r2_buckets?.length||config.vars?.FILE_STORAGE!=='d1')throw Error('무결제 시험 구성에는 R2 구독을 연결하지 않습니다.');
 if(mode==='check'){console.log('D1-only configuration: no R2 subscription, small-file limits enforced.');process.exit(0)}

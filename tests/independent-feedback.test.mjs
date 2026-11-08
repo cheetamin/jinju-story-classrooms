@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {feedbackContext} from '../lib/lantern/feedback.mjs';
+test('the new installation never relays an original-site cookie',async()=>{let calls=0;await assert.rejects(()=>feedbackContext(new Request('https://local.test/api/feedback',{headers:{Cookie:'lantern_original_student=lantern_session.fake'}}),{},async()=>{calls++;return Response.json({})}));assert.equal(calls,0)});

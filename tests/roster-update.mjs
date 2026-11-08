@@ -10,6 +10,6 @@ let m=await call('mine');await call('work',{work:{title:'saved work',body:'keep 
 const names=JSON.parse(env.ROSTER);names[0]='교정이름';names[1]='수정이름';names.push('교사용');env.ROSTER=JSON.stringify(names);env.ROSTER_VERSION='roster-v2';env.STUDENT_PASSWORD_VERSION='names-v2';
 await call('auth/class',{code:env.CLASS_CODE});const rows=await call('students');assert.equal(rows.length,22);assert.equal(rows[0].name,names[0]);assert.equal(rows[1].name,names[1]);assert.equal(new Set(rows.map(r=>r.animal)).size,22);
 await call('auth/student',{id:'1',password:namePassword(names[0])});m=await call('mine');assert.equal(m.submitted.title,'saved work');
-await call('auth/student',{id:'22',password:'rytkdyd'});m=await call('mine');assert.equal(m.student_id,'22');
+await call('auth/teacher',{password:env.TEACHER_PASSWORD});const teacherSlot=await call('teacher/password',{id:'22'});await call('auth/class',{code:env.CLASS_CODE});await call('auth/student',{id:'22',password:teacherSlot.password});m=await call('mine');assert.equal(m.student_id,'22');
 await call('work',{work:{title:'teacher trial',body:'trial submission',files:[]},revision:m.revision,submit:true});
 console.log('PASS: roster corrections preserve work, name passwords, 22nd trial account submission, 22 unique animals');

@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import {fetchInProcess} from './inprocess.mjs';
+const jars={};
+async function call(who,path,data,status=200,id=''){
+ const r=await fetchInProcess('https://test.local/api/'+path+(id?'?class='+id:''),{method:data===undefined?'GET':'POST',headers:{Origin:'https://test.local','X-Lantern-Request':'1','Content-Type':'application/json',Cookie:jars[who]||''},body:data===undefined?undefined:JSON.stringify(data)});
+ const out=await r.json();assert.equal(r.status,status,JSON.stringify(out));if(r.headers.has('set-cookie'))jars[who]=r.headers.get('set-cookie').split(';')[0];return out;
+}
+const input={school:'가상초등학교',label:'4학년 1반',password:'regional-teacher-test',code:'region-class-test',students:[{number:1,name:'가상학생'}]};
+const a=await call('a','classrooms/create',{...input,region:'수원'}),b=await call('b','classrooms/create',{...input,region:'진주'});
+await call('bad','classrooms/create',{...input,region:'<img src=x>'},400);
+await call('a','auth/teacher',{password:input.password},200,a.id);await call('b','auth/teacher',{password:input.password},200,b.id);
+assert.equal((await call('a','status',undefined,200,a.id)).classroom.region,'수원');
+let info=await call('a','learning-info',undefined,200,a.id);assert.equal(info.doc.sections.length,4);assert.ok(!JSON.stringify(info).includes('진주'));
+const bi=await call('b','learning-info',undefined,200,b.id);assert.ok(JSON.stringify(bi.doc).includes('촉석루'));
+info.doc.sections[0].cards[0].text='수원에서 우리 반이 조사한 내용';await call('a','teacher/learning-info',{revision:0,regionRevision:info.regionRevision,doc:info.doc},200,a.id);
+await call('v','auth/class',{code:input.code},200,a.id);await call('v','teacher/region',{region:'부산',revision:0},403,a.id);
+const pw=await call('a','teacher/password',{id:'1'},200,a.id);await call('s','auth/class',{code:input.code},200,a.id);await call('s','auth/student',{id:'1',password:pw.password},200,a.id);
+let mine=await call('s','mine',undefined,200,a.id);await call('s','work',{revision:mine.revision,work:{title:'내가 쓴 수원 이야기',body:'직접 조사한 내용',files:[]}},200,a.id);
+await call('a','teacher/region',{region:'부산',revision:0},200,a.id);await call('a','teacher/region',{region:'제주',revision:0},409,a.id);
+assert.equal((await call('a','status',undefined,200,a.id)).classroom.region,'부산');assert.equal((await call('b','status',undefined,200,b.id)).classroom.region,'진주');
+assert.equal((await call('s','mine',undefined,200,a.id)).draft.title,'내가 쓴 수원 이야기');
+info=await call('a','learning-info',undefined,200,a.id);assert.equal(info.authoredForRegion,'수원');assert.equal(info.doc.sections[0].cards[0].text,'수원에서 우리 반이 조사한 내용');
+assert.ok(!JSON.stringify((await call('a','students',undefined,200,a.id)).find(s=>s.isExample)).includes('진주'));
+await call('a','teacher/region',{region:'부산',revision:-1},400,a.id);await call('a','teacher/region',{region:' ',revision:1},400,a.id);
+const base=await import('../lib/lantern/region.mjs');
+await call('a','teacher/learning-info',{revision:info.revision,regionRevision:info.regionRevision,doc:base.defaultRegionInfo('부산'),reset:true},200,a.id);
+assert.equal((await call('a','learning-info',undefined,200,a.id)).authoredForRegion,'부산');
+assert.equal((await call('s','mine',undefined,200,a.id)).draft.title,'내가 쓴 수원 이야기');
+const fresh=(await call('a','status',undefined,200,a.id)).classroom;
+await call('a','teacher/region',{region:'제주',revision:fresh.regionRevision},200,a.id);
+const c=await call('c','classrooms/create',{...input,region:'수원'});
+await call('c','auth/teacher',{password:input.password},200,c.id);
+const staleLesson=await call('c','learning-info',undefined,200,c.id);
+await call('c','teacher/region',{region:'부산',revision:0},200,c.id);
+await call('c','teacher/learning-info',staleLesson,409,c.id);
+await call('c','teacher/learning-info',{...staleLesson,reset:true},409,c.id);
+assert.equal((await call('c','learning-info',undefined,200,c.id)).revision,0);
+console.log('PASS region creation, metadata, teacher-only settings, revision conflicts, class isolation, authored lessons and student drafts preserved');

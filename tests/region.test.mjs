@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import * as regions from '../lib/lantern/region.mjs';
+import {chapterKindsForRegion} from '../lib/lantern/chapters.mjs';
+import {exampleForRegion} from '../lib/lantern/example-data.mjs';
+test('region validates normalized names and rejects markup/oversize',()=>{assert.equal(regions.validateRegion('  수원  '),'수원');for(const bad of ['', ' ', '<script>', '가'.repeat(31),null])assert.throws(()=>regions.validateRegion(bad));});
+test('generic prompts and examples refer only to the selected region',()=>{for(const region of ['수원','부산','제주특별자치도']){const all=JSON.stringify([chapterKindsForRegion(region),exampleForRegion(region),regions.defaultRegionInfo(region)]);assert.ok(all.includes(region));assert.ok(!all.includes('진주'));assert.ok(!all.includes('촉석루'));assert.equal(chapterKindsForRegion(region).length,4)}});
+test('Jinju selects original lessons; generic regions have four neutral research sections',()=>{assert.ok(JSON.stringify(regions.defaultRegionInfo('진주')).includes('촉석루'));assert.equal(regions.defaultRegionInfo('수원').sections.length,4);assert.deepEqual(regions.validateRegionInfo(regions.defaultRegionInfo('수원'),'수원'),regions.defaultRegionInfo('수원'))});
+test('region titles use the correct Korean object particle',()=>{assert.equal(regions.regionTitle('진주'),'우리 지역 진주를 소개해요');assert.equal(regions.regionTitle('수원'),'우리 지역 수원을 소개해요');assert.equal(regions.regionTitle('부산'),'우리 지역 부산을 소개해요');});
+test('a region containing Jinju is replaced exactly once',()=>{assert.equal(chapterKindsForRegion('진주시')[0].title,'진주시 소개');assert.equal(chapterKindsForRegion('진주 지역')[0].title,'진주 지역 소개')});
+test('lesson image URLs allow only credential-free HTTPS',()=>{assert.equal(regions.validateLessonImageUrl('https://example.org/photo.jpg'),'https://example.org/photo.jpg');for(const bad of ['javascript:alert(1)','http://example.org/a','https://user:pass@example.org/a'])assert.throws(()=>regions.validateLessonImageUrl(bad))});

@@ -36,6 +36,13 @@
       "when": 1793756822139,
       "tag": "0004_exit_feedback",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1794146400000,
+      "tag": "0005_classroom_region",
+      "breakpoints": true
     }
   ]
 }
