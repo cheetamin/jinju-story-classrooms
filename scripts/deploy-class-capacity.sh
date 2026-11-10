@@ -11,5 +11,5 @@ npx --yes pnpm@11.25.0 check:free
 npx --yes pnpm@11.25.0 build:external
 node node_modules/wrangler/bin/wrangler.js login
 printf '\n진주 전용 사이트의 학급 제한을 100개로 확대하고 기존 Worker에 배포합니다.\n기존 학생·작품은 삭제하지 않습니다. 파일 저장 제한은 유지합니다.\n'
-node node_modules/wrangler/bin/wrangler.js d1 migrations apply DB --remote --config wrangler.external.jsonc
+node node_modules/wrangler/bin/wrangler.js d1 execute DB --remote --config wrangler.external.jsonc --file drizzle/0005_expand_class_capacity.sql
 CONFIRM_WORKERS_FREE=yes npx --yes pnpm@11.25.0 deploy:external
