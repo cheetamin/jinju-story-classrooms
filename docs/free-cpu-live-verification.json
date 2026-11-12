@@ -1,0 +1,93 @@
+{
+  "date": "2026-11-12 Asia/Seoul",
+  "commit": "ea13fa7780c5b2c6618a36cf69aa122f3ff9b5ed",
+  "origin": "https://jinju-story-trial-20261102.cheetamin.workers.dev",
+  "scope": "Fresh synthetic class on public origin, not direct legacy backend",
+  "concurrent_students": 30,
+  "photo_bytes": 180220,
+  "phases": [
+    {
+      "phase": "class-entry",
+      "clients": 30,
+      "success": 30,
+      "wave_seconds": 9.196,
+      "p50_seconds": 8.962,
+      "p95_seconds": 9.15,
+      "max_seconds": 9.151
+    },
+    {
+      "phase": "student-entry",
+      "clients": 30,
+      "success": 30,
+      "wave_seconds": 9.668,
+      "p50_seconds": 9.468,
+      "p95_seconds": 9.652,
+      "max_seconds": 9.654
+    },
+    {
+      "phase": "authenticated-load",
+      "clients": 30,
+      "success": 30,
+      "wave_seconds": 7.995,
+      "p50_seconds": 7.812,
+      "p95_seconds": 7.974,
+      "max_seconds": 7.979
+    },
+    {
+      "phase": "photo-upload-180KB",
+      "clients": 30,
+      "success": 30,
+      "wave_seconds": 11.409,
+      "p50_seconds": 11.149,
+      "p95_seconds": 11.348,
+      "max_seconds": 11.392
+    },
+    {
+      "phase": "save-photo-work",
+      "clients": 30,
+      "success": 30,
+      "wave_seconds": 15.717,
+      "p50_seconds": 7.647,
+      "p95_seconds": 7.8,
+      "max_seconds": 7.813
+    },
+    {
+      "phase": "saved-content-verification",
+      "clients": 30,
+      "success": 30,
+      "wave_seconds": 8.102,
+      "p50_seconds": 8.07,
+      "p95_seconds": 8.084,
+      "max_seconds": 8.089
+    },
+    {
+      "phase": "photo-download-integrity",
+      "clients": 30,
+      "success": 30,
+      "wave_seconds": 9.89,
+      "p50_seconds": 9.485,
+      "p95_seconds": 9.702,
+      "max_seconds": 9.852
+    }
+  ],
+  "request_count": 245,
+  "unexpected_http_statuses": 0,
+  "coordinated_requests": 245,
+  "error": null,
+  "test_class_and_photos_deleted": true,
+  "api_handler_wall_time_p95_ms": {
+    "classrooms/create": 1701.0,
+    "auth/teacher": 1098.0,
+    "auth/class": 2279.0,
+    "auth/student": 2661.0,
+    "mine": 1563.0,
+    "upload": 4723.0,
+    "work": 1470.0,
+    "files/:synthetic-id": 3096.0,
+    "teacher/backup": 1264.0,
+    "teacher/delete-class": 1486.0
+  },
+  "timing_note": "Client times include the test executor network/proxy. Handler wall time includes D1 waits; neither is a guarantee of school-device rendering or Wi-Fi speed.",
+  "existing_jinju_teacher_example_visible": true,
+  "captured_console_errors_in_existing_studio": 0
+}
