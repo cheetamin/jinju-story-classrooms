@@ -1,3 +1,11 @@
-import {spawnSync} from 'node:child_process';import fs from 'node:fs';import path from 'node:path';
-const r=spawnSync(process.execPath,['node_modules/vite/bin/vite.js','build','--config','vite.external.config.ts'],{stdio:'inherit'});if(r.status!==0)process.exit(r.status??1);
-function clean(root){if(!fs.existsSync(root))return;for(const entry of fs.readdirSync(root,{withFileTypes:true})){const file=path.join(root,entry.name);if(entry.isDirectory())clean(file);else if(entry.name.startsWith('.dev.vars')||entry.name.startsWith('.env'))fs.rmSync(file)}}clean('dist');console.log('Independent build complete; local secret files removed from output.');
+import {build} from 'vite';
+import fs from 'node:fs';
+// Pages are built once: no React/RSC renderer runs inside the public Worker.
+await build({configFile:'vite.static.config.ts'});
+await build({configFile:false,publicDir:false,build:{ssr:'worker/external.ts',outDir:'dist/server',emptyOutDir:true,minify:true,rollupOptions:{external:['cloudflare:workers'],output:{entryFileNames:'index.js'}}}});
+const config=JSON.parse(fs.readFileSync('wrangler.external.jsonc','utf8'));
+config.main='index.js';
+config.assets={directory:'../client',binding:'ASSETS',not_found_handling:'single-page-application',run_worker_first:['/api','/api/*']};
+config.d1_databases=config.d1_databases.map(db=>({...db,migrations_dir:'../../drizzle'}));
+fs.writeFileSync('dist/server/wrangler.json',JSON.stringify(config,null,2)+'\n');
+console.log('Independent static client and API Worker built; existing D1 binding and file quotas preserved.');
