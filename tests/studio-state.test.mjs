@@ -2,9 +2,10 @@ import {test} from 'node:test';import assert from 'node:assert/strict';import {s
 test('student name comes from authenticated profile; numeric ids are never rendered as a name',()=>{assert.equal(studentDisplayName({name:'3-가상한별'}),'가상한별');assert.equal(studentDisplayName({name:'8번 가상다솔'}),'가상다솔');assert.equal(studentDisplayName({name:'1'}),null);assert.equal(studentDisplayName({name:'교사용'}),'교사용')});
 test('existing final numbered teacher example is a login choice without a separate trial',()=>{const input=[{id:'1',name:'가상학생'},{id:'40',isExample:true}];assert.deepEqual(studentChoices(input).map(s=>s.id),['1','40']);assert.equal(studentChoices([...input,{id:'demo',isDemo:true}]).length,2)});
 test('loading commits only a complete authorized snapshot with expected student binding',async()=>{const calls=[];const snapshot=await loadStudioState(async(path,data,options)=>{calls.push({path,options});if(path==='status')return {session:{role:'student',studentId:'3'}};if(path==='mine')return {profile:{id:'3',name:'가상한별'},draft:null};return [{id:'3',name:'viewer masked'}]});assert.equal(snapshot.record.profile.name,'가상한별');assert.deepEqual(calls[1],{path:'mine',options:{studentId:'3'}});await assert.rejects(loadStudioState(async path=>{if(path==='status')return {session:{role:'student',studentId:'3'}};throw Error('auth changed')}),/auth changed/)});
-test('authorized work and roster start together without waiting for work transfer',async()=>{
- let release;const wait=new Promise(r=>release=r);const started=[];
- const loaded=loadStudioState(async path=>{started.push(path);if(path==='status')return {session:{role:'student',studentId:'1'}};if(path==='mine'){await wait;return {profile:{id:'1'}}}return [{id:'1'}]});
- await new Promise(setImmediate);
- try{assert.ok(started.includes('students'),'roster must start while work request is pending')}finally{release();await loaded}
+test('authenticated studio uses its own profile without transferring every student work',async()=>{
+ const calls=[];const snapshot=await loadStudioState(async path=>{calls.push(path);if(path==='status')return {session:{role:'student',studentId:'1'}};if(path==='mine')return {profile:{id:'1',name:'가상학생'}};throw Error('unnecessary class roster transfer')});
+ assert.equal(snapshot.record.profile.name,'가상학생');assert.deepEqual(calls,['status','mine']);
+});
+test('old servers without a profile can still load the roster; viewers keep login choices',async()=>{
+ for(const role of ['student','viewer']){const calls=[];const out=await loadStudioState(async path=>{calls.push(path);if(path==='status')return {session:{role,studentId:'1'}};if(path==='mine')return {draft:null};return [{id:'1',name:'가상학생'}]});assert.ok(calls.includes('students'));assert.equal(out.students[0].id,'1')}
 });
