@@ -23,3 +23,8 @@ test('unsupported methods cannot invoke handlers',async()=>{
  const response=await externalFetch(new Request('https://test.local/api/work',{method:'DELETE'}),{},()=>{throw Error('must not run')});
  assert.equal(response.status,405);
 });
+test('original Jinju session keeps its existing backend after static deployment',async()=>{
+ let originalCalls=0,localCalls=0;
+ const response=await externalFetch(new Request('https://test.local/api/status',{headers:{Cookie:'lantern_original_session=lantern_session.saved-session'}}),{},()=>{localCalls++;return Response.json({platform:true})},async req=>{originalCalls++;assert.equal(new URL(req.url).origin,'https://jinju-animal-lantern-class44.workspace-889499.chatgpt.site');assert.equal(req.headers.get('Cookie'),'lantern_session=saved-session');return Response.json({session:{role:'student',studentId:'22'}})});
+ assert.equal(originalCalls,1);assert.equal(localCalls,0);assert.equal((await response.json()).session.studentId,'22');
+});
