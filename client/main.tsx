@@ -1,0 +1,11 @@
+import {lazy,Suspense} from 'react';
+import {createRoot} from 'react-dom/client';
+import '../app/globals.css';
+const Gallery=lazy(()=>import('../components/lantern/Gallery'));
+const Teacher=lazy(()=>import('../components/lantern/Teacher'));
+const Studio=lazy(()=>import('../components/lantern/Studio'));
+const Admin=lazy(()=>import('../components/lantern/Admin'));
+const pages={'/':Gallery,'/gallery':Gallery,'/teacher':Teacher,'/studio':Studio,'/admin':Admin};
+const path=window.location.pathname.replace(/\/$/,'')||'/';
+const Page=pages[path as keyof typeof pages];
+createRoot(document.getElementById('root')!).render(<Suspense fallback={<main className="classroom-gate" role="status">전시관을 열고 있어요…</main>}>{Page?<Page/>:<main className="classroom-gate"><h1>페이지를 찾을 수 없어요</h1><a href="/">처음 화면으로</a></main>}</Suspense>);
