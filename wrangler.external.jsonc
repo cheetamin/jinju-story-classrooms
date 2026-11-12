@@ -17,5 +17,21 @@
       "database_id": "c3ca8832-2a2e-4d2a-aaaa-86296482c39e",
       "migrations_dir": "drizzle"
     }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "LANTERN_API",
+        "class_name": "LanternApi"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1-lantern-api",
+      "new_sqlite_classes": [
+        "LanternApi"
+      ]
+    }
   ]
 }

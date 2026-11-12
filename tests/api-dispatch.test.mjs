@@ -1,0 +1,8 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {dispatchApi} from '../worker/api-dispatch.mjs';
+test('new classroom requests keep body, origin and private session inside internal compute binding',async()=>{
+ const request=new Request('https://test.local/api/classrooms/create',{method:'POST',headers:{Origin:'https://test.local',Cookie:'private=example','X-Lantern-Request':'1'},body:'{"students":30}'});let target;
+ const namespace={idFromName(name){target=name;return name},get(id){assert.equal(id,target);return {async fetch(received){assert.equal(received,request);assert.equal(received.headers.get('Cookie'),'private=example');assert.equal(await received.text(),'{"students":30}');return Response.json({ok:true})}}}};
+ const response=await dispatchApi(request,namespace);assert.equal(target,'platform');assert.equal((await response.json()).ok,true);
+});
+test('classes have independent internal execution instances and preserve query context',async()=>{const seen=[];const ns={idFromName(name){seen.push(name);return name},get(){return {fetch:async r=>new Response(new URL(r.url).search)}}};for(const room of ['10000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002']){const r=await dispatchApi(new Request('https://test.local/api/work?class='+room),ns);assert.equal(await r.text(),'?class='+room)}assert.equal(new Set(seen).size,2)});
+test('missing compute binding fails closed rather than using a CPU-limited authentication fallback',async()=>{const r=await dispatchApi(new Request('https://test.local/api/status'),undefined);assert.equal(r.status,503);assert.equal(r.headers.get('Cache-Control'),'no-store')});
