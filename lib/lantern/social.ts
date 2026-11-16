@@ -28,6 +28,6 @@ export async function social(req:Request,d:D1Database,room:string,session:{role:
  }
  }
  const likes=await d.prepare('SELECT COUNT(*) AS total,COALESCE(MAX(author=?),0) AS liked FROM work_likes WHERE room=? AND target=?').bind(author||'',room,target).first<any>();
- const comments=await d.prepare(`SELECT c.*,s.name FROM work_comments c LEFT JOIN ${studentTable} s ON s.id=c.author WHERE c.room=? AND c.target=? ORDER BY c.created DESC,c.id DESC LIMIT 100`).bind(room,target).all<any>();
- return json({likes:likes.total,liked:!!likes.liked,canWrite,comments:comments.results.map(c=>({id:c.id,text:c.body,name:c.name||'이전 학급 친구',created:c.created,canDelete:session.role==='teacher'||canWrite&&c.author===author}))});
+ const comments=await d.prepare('SELECT id,author,body,created FROM work_comments WHERE room=? AND target=? ORDER BY created DESC,id DESC LIMIT 100').bind(room,target).all<any>();
+ return json({likes:likes.total,liked:!!likes.liked,canWrite,comments:comments.results.map(c=>({id:c.id,text:c.body,name:'익명 친구',created:c.created,canDelete:session.role==='teacher'||canWrite&&c.author===author}))});
 }
