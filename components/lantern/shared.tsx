@@ -13,7 +13,7 @@ const statusRequests=createStatusRequests();
 export function api(path:string,data?:unknown,options?:{studentId?:string;signal?:AbortSignal;context?:string}):Promise<any>{
  if(data!==undefined)statusRequests.invalidate();
  if(path==='status'&&data===undefined&&!options?.signal&&typeof window!=='undefined'){
-  const key=classHref('/api/status')+'|'+window.location.pathname+'|'+(options?.studentId||'');
+  const key=classHref('/api/status')+'|'+window.location.pathname+'|'+(options?.studentId||'')+'|'+(options?.context||'');
   return statusRequests.read(key,()=>requestApi(path,data,options));
  }
  return requestApi(path,data,options);
