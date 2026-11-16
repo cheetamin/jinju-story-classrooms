@@ -1,6 +1,6 @@
 # Student entry, identity and teacher trial
 
-The user reported a false default school/class during entry, student submissions rejected after login, and numeric student headings. They want a documented teacher trial student named 교사용 with code rytkdyd, available in every class, alongside existing read-only common examples.
+The user reported a false default school/class during entry, student submissions rejected after login, and numeric student headings. They want a documented teacher trial student named 교사용 with code [서버 설정의 예시 접속 코드], available in every class, alongside existing read-only common examples.
 
 Keep student records/works/passwords and free deployment bindings. Use current school/class metadata only after loading. Authenticate student mutations against the editor's expected student id. Separate teacher/student/viewer HttpOnly cookies per class and select context server-side; old single cookies remain compatible. Preserved original backend receives equivalent request context and isolated cookies. Expired/mismatched sessions trigger reauthentication without discarding dirty drafts.
 
