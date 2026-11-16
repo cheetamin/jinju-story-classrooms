@@ -14,8 +14,8 @@ export async function social(req:Request,d:D1Database,room:string,session:{role:
  if(req.method==='POST'){
  const raw=await req.text();if(raw.length>2048)fail('댓글은 300자 이내로 써 주세요.');let b:any;try{b=JSON.parse(raw)}catch{fail('입력 내용을 확인해 주세요.')}
  if(b.action==='delete'){
- if(session.role!=='teacher'&&!canWrite)fail('본인 계정으로 로그인해 주세요.',403);
- await d.prepare('DELETE FROM work_comments WHERE id=? AND room=? AND target=?'+(session.role==='teacher'?'':' AND author=?')).bind(...[String(b.id),room,target,...(session.role==='teacher'?[]:[author])]).run();
+ if(session.role!=='teacher')fail('댓글은 선생님만 삭제할 수 있어요.',403);
+ await d.prepare('DELETE FROM work_comments WHERE id=? AND room=? AND target=?').bind(String(b.id),room,target).run();
  }else{
  if(!canWrite)fail('학생 개인 계정으로 로그인하면 좋아요와 댓글을 남길 수 있어요.',403);
  if(b.action==='like'&&typeof b.liked==='boolean'){
@@ -29,5 +29,5 @@ export async function social(req:Request,d:D1Database,room:string,session:{role:
  }
  const likes=await d.prepare('SELECT COUNT(*) AS total,COALESCE(MAX(author=?),0) AS liked FROM work_likes WHERE room=? AND target=?').bind(author||'',room,target).first<any>();
  const comments=await d.prepare('SELECT id,author,body,created FROM work_comments WHERE room=? AND target=? ORDER BY created DESC,id DESC LIMIT 100').bind(room,target).all<any>();
- return json({likes:likes.total,liked:!!likes.liked,canWrite,comments:comments.results.map(c=>({id:c.id,text:c.body,name:'익명 친구',created:c.created,canDelete:session.role==='teacher'||canWrite&&c.author===author}))});
+ return json({likes:likes.total,liked:!!likes.liked,canWrite,comments:comments.results.map(c=>({id:c.id,text:c.body,name:'익명 친구',created:c.created,canDelete:session.role==='teacher'}))});
 }
