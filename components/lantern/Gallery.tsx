@@ -1,4 +1,5 @@
 'use client';
+import {WorkSocial} from './WorkSocial';
 import {useEffect,useState,useRef} from 'react';
 import {studentChoices} from '../../lib/lantern/studio-state.mjs';
 import {TeacherExampleGuide} from './TeacherExampleGuide';
@@ -53,7 +54,7 @@ export default function Gallery(){
  {menu&&<div className="festival-drawer-backdrop" onClick={()=>setMenu(false)}><aside className="festival-drawer" onClick={e=>e.stopPropagation()}><header><h2>남강의 작은 안내소</h2><button onClick={()=>setMenu(false)} aria-label="옆 메뉴 닫기">×</button></header><p>{classroom.school} · {classroom.label}</p><ClassLink href="/studio">🎨 나의 작품 제작실 →</ClassLink><ClassLink href="/teacher">🗝 교사 관리실 →</ClassLink><a href="/teacher?new=1">🏫 다른 학교 · 새 학급 만들기 →</a><button onClick={()=>{setMenu(false);setPanel(entered?'class':'entry')}}>♧ 우리 반 전체 보기</button><button onClick={()=>{setMenu(false);setPanel(entered?'works':'entry')}}>▤ 작품 모음 열기</button><button onClick={()=>setPaused(p=>!p)}>{paused?'▶ 유등 움직이기':'Ⅱ 유등 잠시 멈추기'}</button><button onClick={()=>{setMenu(false);setPanel('');setSelected(null);setView(false);setRows([]);setEntered(false);setLeaving(true)}}>전시관 나가기</button><small>스마트폰에서는 강을 좌우로 밀어 둘러볼 수 있어요.</small></aside></div>}
  {panel==='entry'&&<Modal title="남강의 밤에 초대해요" onClose={()=>{setPanel('');setError('')}}><div className="login-art"><Animal n={1}/><Animal n={0}/><Animal n={2}/></div><p>{classroom.school} {classroom.label}<br/>선생님께 받은 학급 입장 코드를 입력해요.</p><form onSubmit={enter}><label>학급 입장 코드<input type="password" autoFocus value={code} onChange={e=>setCode(e.target.value)} required placeholder="입장 코드 입력" autoComplete="off"/></label>{error&&<p className="error" role="alert">{error}</p>}<button className="primary full" disabled={busy}>{busy?'문을 여는 중…':'전시관 입장하기 →'}</button></form></Modal>}
  {['class','works'].includes(panel)&&<Modal wide title={panel==='class'?classroom.label+' · 우리 반 유등':'친구들의 작품 모음'} onClose={()=>setPanel('')}><div className="student-grid">{rows.map(r=><button key={r.id} onClick={()=>{setSelected(r);setPanel('');setView(false)}}><Animal n={r.animal}/><b>{r.name}</b><small>{panel==='class'?animals[r.animal]+' 유등':r.published?.title||'아직 작품을 준비하고 있어요!'}</small><span className={'tag '+(r.published?'green':'')}>{r.published?'전시 중':'준비 중'}</span></button>)}</div></Modal>}
- {selected&&view&&selected.published&&<Modal wide title={selected.name+'의 지역 이야기'} onClose={()=>{setSelected(null);setView(false)}}><WorkView work={selected.published}/></Modal>}
+ {selected&&view&&selected.published&&<Modal wide title={selected.name+'의 지역 이야기'} onClose={()=>{setSelected(null);setView(false)}}><WorkView work={selected.published}/>{!selected.isExample&&<WorkSocial key={selected.id} student={selected} students={rows}/>}</Modal>}
 {panel==='info'&&<Modal wide title="진주 알아보기" onClose={()=>setPanel('')}><JinjuInfo/></Modal>}
  </div>;
 }

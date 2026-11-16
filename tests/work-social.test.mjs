@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {social} from '../lib/lantern/social.ts';
+function setup(){const sql=new DatabaseSync(':memory:');sql.exec("CREATE TABLE class_works(student_id TEXT,published TEXT); CREATE TABLE class_students(id TEXT,name TEXT); INSERT INTO class_works VALUES('a:1','{}'),('b:1','{}'); INSERT INTO class_students VALUES('a:2','친구'),('b:2','다른 반');");const db={prepare(q){let args=[];const statement=()=>sql.prepare(q);const p={bind(...v){args=v;return p},async first(){return statement().get(...args)},async all(){return {results:statement().all(...args)}},async run(){return {meta:statement().run(...args)}}};return p},async batch(items){return Promise.all(items.map(x=>x.run()))}};return db}
+const student={role:'student',studentId:'a:2'};
+function request(data){return new Request('https://example.test/api/social/1',data?{method:'POST',body:JSON.stringify(data)}:{})}
+const call=(d,s=student,body,room='a')=>social(request(body),d,room,s,'1','class_works','class_students');
+test('idempotent likes and class isolation',async()=>{const d=setup();await call(d,student,{action:'like',liked:true});let r=await (await call(d,student,{action:'like',liked:true})).json();assert.equal(r.likes,1);r=await(await call(d,{role:'student',studentId:'b:2'},undefined,'b')).json();assert.equal(r.likes,0);r=await(await call(d,student,{action:'like',liked:false})).json();assert.equal(r.likes,0)});
+test('comment validation, ownership, teacher deletion and viewer restrictions',async()=>{const d=setup();await assert.rejects(call(d,{role:'viewer',studentId:null},{action:'comment',text:'hello'}),e=>e.status===403);await assert.rejects(call(d,student,{action:'comment',text:' '.repeat(4)}));let r=await(await call(d,student,{action:'comment',text:'멋진 글이야!'})).json();const id=r.comments[0].id;assert.equal(r.comments[0].name,'친구');await call(d,{role:'student',studentId:'a:3'},{action:'delete',id});assert.equal((await(await call(d)).json()).comments.length,1);await call(d,{role:'teacher',studentId:null},{action:'delete',id});assert.equal((await(await call(d)).json()).comments.length,0)});
+test('unpublished target is rejected',async()=>{await assert.rejects(social(request(),setup(),'a',student,'9','class_works','class_students'),e=>e.status===404)});
