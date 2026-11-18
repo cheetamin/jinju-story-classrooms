@@ -1,5 +1,5 @@
 import {listFeedback} from './feedback.mjs';
-import {revealCredential} from './credential-vault.mjs';
+import {revealCredential,captureCredential} from './credential-vault.mjs';
 import {classBackup} from './class-backup.ts';
 import {privateFile} from './private-file.ts';
 import {readOperatingPolicy,validateOperatingPolicy,usageForClass} from './operations.mjs';
@@ -28,6 +28,22 @@ export async function handleAdmin(req:Request,e:Env){try{
  if(await marker(e,'class_deleting:'+room.id))fail('정리 중인 학급이에요.',410);
  if(!e.CREDENTIAL_VAULT_KEY)fail('코드 확인을 위한 보안 설정이 필요해요.',503);
  return json({school:room.school,label:room.label,classCode:await revealCredential(e,room,'class'),teacherCode:await revealCredential(e,room,'teacher')});}
+ if(path==='teacher-password-reset'&&req.method==='POST'){
+ const b=await read(req);await authenticate(e,req,b.password);
+ if(typeof b.classId!=='string'||!/^[a-f0-9-]{36}$/.test(b.classId))fail('학급을 선택해 주세요.');
+ const room=await e.DB.prepare('SELECT id,teacher_password FROM classrooms WHERE id=?').bind(b.classId).first<{id:string;teacher_password:string}>();
+ if(!room)fail('학급을 찾을 수 없어요.',404);
+ if(await marker(e,'class_deleting:'+room.id))fail('정리 중인 학급이에요.',410);
+ const next=randomToken().slice(0,32);
+ const hashed=await hashPassword(next);
+ const [updated]=await e.DB.batch([
+  e.DB.prepare('UPDATE classrooms SET teacher_password=? WHERE id=? AND teacher_password=? AND NOT EXISTS(SELECT 1 FROM settings WHERE key=?)').bind(hashed,room.id,room.teacher_password,'class_deleting:'+room.id),
+  e.DB.prepare("DELETE FROM class_sessions WHERE class_id=? AND role='teacher' AND EXISTS(SELECT 1 FROM classrooms WHERE id=? AND teacher_password=?)").bind(room.id,room.id,hashed),
+ ]);
+ if(updated.meta.changes!==1)fail('학급 설정이 변경되었어요. 다시 시도해 주세요.',409);
+ await captureCredential(e,room.id,'teacher',next,hashed);
+ return json({ok:true,newPassword:next});
+ }
  if(path==='logout'&&req.method==='POST'){await e.DB.prepare('DELETE FROM sessions WHERE token=?').bind(session.token).run();return json({ok:true},200,{'Set-Cookie':cookie('',0)})}
  if(path==='backup'&&req.method==='GET')return json(await classBackup(e,url.searchParams.get('classId')||''));
  if(path.startsWith('files/')&&req.method==='GET'){const f=await e.DB.prepare('SELECT * FROM class_files WHERE id=?').bind(path.slice(6)).first<any>();if(!f)fail('파일을 찾을 수 없어요.',404);return await privateFile(req,e,f)}

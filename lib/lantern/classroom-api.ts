@@ -73,10 +73,21 @@ export async function handleClassroom(req:Request,e:Store):Promise<Response>{try
  const session=await classSession(e,req,roomId,path);
  const external=(s:any)=>s?{role:s.role,studentId:s.student_id?.split(':')[1]||null}:null;
  const metadata={id:roomId,school:room.school,label:room.label};const viewerAccess=(await d.prepare('SELECT value FROM settings WHERE key=?').bind('viewer_access:'+roomId).first<any>())?.value||'members';
- async function login(role:string,studentId:string|null){const raw=randomToken();await d.prepare('INSERT INTO class_sessions(token,class_id,role,student_id,expires) VALUES(?,?,?,?,?)').bind(await digest(raw),roomId,role,studentId,Date.now()+8*3600000).run();return json({...external({role,student_id:studentId}),classroom:metadata},200,{'Set-Cookie':classSessionCookie(req,roomId,role,raw)});}
+ async function login(role:string,studentId:string|null){
+  const raw=randomToken(), token=await digest(raw), expires=Date.now()+8*3600000;
+  const insert='INSERT INTO class_sessions(token,class_id,role,student_id,expires)';
+  if(role==='teacher'){
+   const result=await d.prepare(insert+' SELECT ?,?,?,?,? WHERE EXISTS(SELECT 1 FROM classrooms WHERE id=? AND teacher_password=?)')
+    .bind(token,roomId,role,studentId,expires,roomId,room.teacher_password).run();
+   if(result.meta.changes!==1)fail('교사 비밀번호를 확인해 주세요.',401);
+  }else{
+   await d.prepare(insert+' VALUES(?,?,?,?,?)').bind(token,roomId,role,studentId,expires).run();
+  }
+  return json({...external({role,student_id:studentId}),classroom:metadata},200,{'Set-Cookie':classSessionCookie(req,roomId,role,raw)});
+ }
  if(path==='status')return json({ready:true,session:external(session),classroom:metadata,viewerAccess});
  if(path==='auth/logout'&&method==='POST')return await classLogout(e,req,roomId);
- if(path==='auth/teacher'&&method==='POST'){await limit(e,req,'teacher:'+roomId,15);const b=await read(req);if(!await verifyPassword(String(b.password||''),room.teacher_password))fail('교사 비밀번호를 확인해 주세요.',401);await captureCredential(e,roomId,'teacher',b.password,room.teacher_password);return login('teacher',null);}
+ if(path==='auth/teacher'&&method==='POST'){await limit(e,req,'teacher:'+roomId,15);const b=await read(req);if(!await verifyPassword(String(b.password||''),room.teacher_password))fail('교사 비밀번호를 확인해 주세요.',401);await captureCredential(e,roomId,'teacher',b.password,room.teacher_password);return await login('teacher',null);}
  if(path==='auth/class'&&method==='POST'){if(await d.prepare('SELECT key FROM settings WHERE key=?').bind('class_archived:'+roomId).first())fail('보관 중인 학급이에요. 선생님께 문의해 주세요.',410);await limit(e,req,'class:'+roomId,150);const b=await read(req);if(!await verifyClassCode(String(b.code||''),room.class_code))fail('학급 입장 코드를 확인해 주세요.',401);await captureCredential(e,roomId,'class',b.code,room.class_code);return login('viewer',null);}
  if(!session)fail('학급 입장 코드로 다시 입장해 주세요.',401);
  if(session.role!=='teacher'&&await d.prepare('SELECT key FROM settings WHERE key=?').bind('class_archived:'+roomId).first())fail('보관 중인 학급이에요.',410);
