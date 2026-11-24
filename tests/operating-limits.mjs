@@ -5,7 +5,7 @@ const form=()=>{const f=new FormData();f.append('file',new Blob(['%PDF-1.7']),'t
 await call('o','admin/policy',{uploadsPaused:true});await call('s','upload',form(),503,a.id);await call('s','work',{work:{title:'저장은 계속',body:'파일 중단 중 글 저장',files:[]},revision:0},200,a.id);
 await call('o','admin/policy',{uploadsPaused:false,classBytes:8,totalBytes:8});await call('s','upload',form(),200,a.id);await call('s','upload',form(),413,a.id);assert.equal((await call('t','teacher/storage',undefined,200,a.id)).bytes,8);
 await call('o','admin/policy',{newClassesPaused:true});await call('t','classrooms/create',input,503);await call('t','students',undefined,200,a.id);
-await call('o','admin/policy',{newClassesPaused:false});await call('t','teacher/roster',{students:[{number:1,name:'변경학생'},{number:7,name:'신규학생'}]},200,a.id);assert.equal((await call('t','teacher/works',undefined,200,a.id))[0].draft.title,'저장은 계속');
+await call('o','admin/policy',{newClassesPaused:false});const added=await call('t','teacher/roster',{students:[{number:1,name:'변경학생'},{number:7,name:'김연아'}]},200,a.id);assert.equal(added.credentials[0].password,'rladusdk');assert.equal((await call('t','teacher/works',undefined,200,a.id))[0].draft.title,'저장은 계속');
 await call('t','teacher/roster',{students:[{number:7,name:'신규학생'}]},409,a.id); // deletion needs explicit confirmation, files must stay safe
 await call('t','teacher/settings',{school:'다른이름초등학교',label:'5학년 2반'},200,a.id);assert.equal((await call('t','status',undefined,200,a.id)).classroom.label,'5학년 2반');
 console.log('PASS: upload cap and pause preserve read/write, usage, creation pause, roster preserves work and rejects accidental deletion, metadata edit');

@@ -1,4 +1,4 @@
-import {hashPassword,randomToken,verifyPassword} from './domain.mjs';
+import {hashPassword,namePassword,verifyPassword} from './domain.mjs';
 type E={DB:D1Database};
 const fail=(s:string,status=400):never=>{throw Object.assign(Error(s),{status})};
 export async function editRoster(e:E,classId:string,b:any){
@@ -9,7 +9,7 @@ export async function editRoster(e:E,classId:string,b:any){
  const changed=b.students.filter((s:any)=>old.some(o=>o.number===s.number&&o.name!==s.name.trim()));
  for(let start=0;start<changed.length;start+=20){const group=changed.slice(start,start+20);statements.push(e.DB.prepare('UPDATE class_students SET name=CASE number '+group.map(()=>'WHEN ? THEN ?').join(' ')+' ELSE name END WHERE class_id=? AND number IN ('+group.map(()=>'?').join(',')+')').bind(...group.flatMap((s:any)=>[s.number,s.name.trim()]),classId,...group.map((s:any)=>s.number)))}
  const added=b.students.filter((s:any)=>!old.some(o=>o.number===s.number));for(const s of added)if(archiveIds.has(classId+':'+s.number))fail('보관 중인 번호예요. 먼저 학생 복구를 눌러 주세요.',409);
- const passwords=added.map(()=>randomToken().slice(0,12)),hashes=await Promise.all(passwords.map((p:string)=>hashPassword(p)));
+ const passwords=added.map((student:{name:string})=>namePassword(student.name)),hashes=await Promise.all(passwords.map((p:string)=>hashPassword(p)));
  for(let start=0;start<added.length;start+=15){const group=added.slice(start,start+15);statements.push(e.DB.prepare('INSERT INTO class_students(id,class_id,number,name,animal,password) VALUES '+group.map(()=>'(?,?,?,?,?,?)').join(',')).bind(...group.flatMap((s:any,i:number)=>[classId+':'+s.number,classId,s.number,s.name.trim(),s.number%22,hashes[start+i]])),e.DB.prepare('INSERT OR IGNORE INTO class_works(student_id) VALUES '+group.map(()=>'(?)').join(',')).bind(...group.map((s:any)=>classId+':'+s.number)))}
  credentials.push(...added.map((s:any,i:number)=>({id:String(s.number),name:s.name.trim(),password:passwords[i]})));
  if(removed.length){const slots=removed.map(()=>'?').join(','),ids=removed.map(s=>s.id);statements.push(e.DB.prepare('INSERT INTO student_archives(id,class_id,number,name,animal,password,archived) SELECT id,class_id,number,name,animal,password,? FROM class_students WHERE class_id=? AND id IN ('+slots+')').bind(Date.now(),classId,...ids),e.DB.prepare('DELETE FROM class_sessions WHERE class_id=? AND student_id IN ('+slots+')').bind(classId,...ids),e.DB.prepare('DELETE FROM class_students WHERE class_id=? AND id IN ('+slots+')').bind(classId,...ids))}
